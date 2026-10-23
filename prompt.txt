@@ -1,10 +1,49 @@
-Report after deployment:
-- no input form at all. just an empty popup. here are the console report for 1 example of add new order button:
-VM27:1325 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'addEventListener')
-    at openOrderForm (<anonymous>:1325:51)
-    at handleAction (<anonymous>:2751:11)
-    at HTMLDocument.handleGlobalClick (<anonymous>:2724:7)
-openOrderForm @ VM27:1325
-handleAction @ VM27:2751
-handleGlobalClick @ VM27:2724
-- the old data in NASI COKOT DAISAFA.xlsxis not imported yet into the new data. help me convert it. 
+new problem on console:
+about:blank:1 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+VM73:11 Uncaught TypeError: app.renderAll is not a function
+    at appInit (<anonymous>:11:11)
+    at HTMLDocument.<anonymous> (<anonymous>:105:7)
+    at fu (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349:125)
+    at 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:59:133
+    at To (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196:105)
+    at c (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270:536)
+    at a (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193:52)
+appInit @ VM73:11
+(anonymous) @ VM73:105
+fu @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349
+(anonymous) @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:59
+To @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196
+c @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270
+a @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+VM71:89 Uncaught (in promise) TypeError: this.loadDashboard is not a function
+    at Object.loadComponent (<anonymous>:89:18)
+loadComponent @ VM71:89
+await in loadComponent
+appInit @ VM73:5
+(anonymous) @ VM73:105
+fu @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349
+(anonymous) @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:59
+To @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196
+c @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270
+a @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193
+VM71:70 Uncaught TypeError: this.renderAll is not a function
+    at Object.navigate (<anonymous>:70:12)
+    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
+navigate @ VM71:70
+(anonymous) @ VM73:19
+VM71:70 Uncaught TypeError: this.renderAll is not a function
+    at Object.navigate (<anonymous>:70:12)
+    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
+navigate @ VM71:70
+(anonymous) @ VM73:19
+VM71:70 Uncaught TypeError: this.renderAll is not a function
+    at Object.navigate (<anonymous>:70:12)
+    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
+navigate @ VM71:70
+(anonymous) @ VM73:19
+
+Here are the updates:
+- the ui not loaded
+- all navigation not working except "lainnya"

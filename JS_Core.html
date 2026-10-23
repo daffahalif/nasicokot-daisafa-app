@@ -72,20 +72,75 @@
     },
 
     /* ---------- Loading Data ---------- */
-    loadData: async function () {
+    loadDashboard: async function () {
       try {
-        const bootstrap = await this.call('bootstrap');
-        app.state.today = bootstrap.today;
-        app.state.tomorrow = bootstrap.tomorrow;
-        app.state.settings = bootstrap.settings;
-        app.state.menu = bootstrap.menu;
+        const result = await this.call('dashboard');
+        app.state.todayPortions = result.today.portions;
+        app.state.todayOmzet = result.today.omzet;
+        app.state.todayMargin = result.today.margin;
+        app.state.monthLabel = result.month.label;
+        app.state.monthPortions = result.month.portions;
+        app.state.monthOmzet = result.month.omzet;
+        app.state.monthMargin = result.month.margin;
+        app.state.cashTunai = result.cash.tunai;
+        app.state.cashQRIS = result.cash.qris;
+        app.state.cashTransfer = result.cash.transfer;
+        app.state.cashTotal = result.cash.total;
+        app.state.expensesMonth = result.expenses_month;
+        app.state.netCashMonth = result.net_cash_month;
+        app.state.unpaid = result.unpaid;
       } catch (err) {
-        this.showToast('Gagal memuat data awal: ' + err.message);
+        this.showToast('Gagal memuat dashboard: ' + err.message);
       }
     },
 
+    loadOrders: async function () {
+      try {
+        const result = await this.call('listOrders');
+        app.state.orders = result.orders;
+      } catch (err) {
+        console.log('Failed to load orders:', err);
+      }
+    },
+
+    loadCustomers: async function () {
+      try {
+        const result = await this.call('listCustomers');
+        app.state.customers = result.customers;
+      } catch (err) {
+        console.log('Failed to load customers:', err);
+      }
+    },
+
+    loadMenu: async function () {
+      try {
+        const result = await this.call('listMenu');
+        app.state.menu = result.menu;
+      } catch (err) {
+        console.log('Failed to load menu:', err);
+      }
+    },
+
+    loadExpenses: async function () {
+      try {
+        const result = await this.call('listExpenses');
+        app.state.expenses = result.expenses;
+      } catch (err) {
+        console.log('Failed to load expenses:', err);
+      }
+    },
+
+    loadSettings: async function () {
+      try {
+        const result = await this.call('getSettings');
+        app.state.settings = result.settings;
+      } catch (err) {
+        console.log('Failed to load settings:', err);
+      }
+    },
+
+    /* ---------- Navigation Data Loading ---------- */
     loadComponent: async function () {
-      await this.loadData();
       await this.loadDashboard();
       await this.loadOrders();
       await this.loadCustomers();
@@ -93,12 +148,17 @@
       await this.loadExpenses();
       await this.loadSettings();
       this.renderAll();
+    },
 
-      // Setup global event listeners
-      this.setupEventListeners();
-
-      const firstInput = document.querySelector('input:not([type=hidden]):not([disabled])');
-      if (firstInput) firstInput.focus();
+    /* ---------- Render Functions ---------- */
+    renderAll: async function () {
+      // Delay slightly to ensure DOM is ready
+      if (!document.querySelector('#page-' + app.state.page)) {
+        return;
+      }
+      const page = app.state.page;
+      const renderFn = renderFunctions[page] || renderFunctions['beranda'];
+      await renderFn.call(renderFunctions);
     },
 
     /* ---------- Money Formatter ---------- */
