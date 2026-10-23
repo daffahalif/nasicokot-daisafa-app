@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Nasi Cokot Daisafa</title>
+  <?!= include('CSS.html'); ?>
+</head>
+<body>
+<div id="wrapper">
+  <header>
+    <div class="title" id="page-title">Beranda</div>
+    <div class="right">
+      <button class="icon-btn" id="btn-settings" style="background:none;border:none;color:#FFC570;padding:0;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2A8.96 8.96 0 0 0 21 8.43 8.96 8.96 0 0 0 8.43 3 8.96 8.96 0 0 0 3 8.43 8.96 8.96 0 0 1 5.24 10.77 8.96 8.96 0 0 1-2.57 5.43A8.96 8.96 0 0 0 8.43 21a8.96 8.96 0 0 0 5.57-2.57 8.96 8.96 0 0 0 2.57-5.43A8.96 8.96 0 0 0 19.43 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="content" id="content">
+    <!-- Beranda -->
+    <section class="page active" id="page-beranda">
+      <div class="card">
+        <h3>Ringkasan Hari Ini</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;">
+          <div><p style="color:#547792;font-size:.85rem;">Porsi</p><p class="money" id="today-portions">0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Omzet</p><p class="money" id="today-omzet">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Margin</p><p class="money" id="today-margin">Rp 0</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Bulan Ini</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;">
+          <div><p style="color:#547792;font-size:.85rem;" id="month-label">Agustus 2026</p><p class="money" id="month-portions">0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Omzet</p><p class="money" id="month-omzet">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Margin</p><p class="money" id="month-margin">Rp 0</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Pesanan Hari Ini</h3>
+        <div id="today-orders-summary">Memuat...</div>
+      </div>
+      <div class="card">
+        <h3>Piutang</h3>
+        <div class="receivables-list" id="receivables-list">
+          <p class="text-muted text-center">Memuat...</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Cashflow Bulan Ini</h3>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;">
+          <div><p style="color:#547792;font-size:.85rem;">Tunai</p><p class="money" id="cash-tunai">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">QRIS</p><p class="money" id="cash-qris">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Transfer</p><p class="money" id="cash-transfer">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Total</p><p class="money" id="cash-total">Rp 0</p></div>
+        </div>
+        <p style="margin-top:.75rem;font-size:.9rem;">Pengeluaran: <span class="money neg" id="expenses-month">Rp 0</span></p>
+        <p style="font-size:.9rem;">Net Cash: <span class="money" id="net-cash-month">Rp 0</span></p>
+      </div>
+      <div class="card">
+        <h3>Nota QRIS</h3>
+        <div id="qris-container" class="text-center">
+          <img id="qris-image" src="" alt="QRIS" class="hidden" style="max-width:160px;border-radius:8px;">
+          <div id="qris-placeholder" class="text-muted" style="padding:1rem;">
+            Atur gambar QRIS di Pengaturan
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pesanan -->
+    <section class="page hidden" id="page-pesanan">
+      <div class="card">
+        <h3>Pilih Tanggal</h3>
+        <input type="date" id="order-date" class="date-input">
+      </div>
+      <div class="card">
+        <h3>Pelanggan</h3>
+        <select id="customer-select">
+          <option value="">-- Pilih Pelanggan --</option>
+        </select>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+          <input type="text" id="new-customer-name" placeholder="Nama baru">
+          <button class="primary" id="btn-add-customer" style="width:auto;padding:.75rem 1rem;">Tambah</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Menu</h3>
+        <select id="menu1-select">
+          <option value="">-- Pilih Menu 1 --</option>
+        </select>
+        <select id="menu2-select">
+          <option value="">-- Pilih Menu 2 (opsional) --</option>
+        </select>
+      </div>
+      <div class="card">
+        <h3>Detail</h3>
+        <input type="number" id="order-qty" value="1" min="1" placeholder="Qty">
+        <select id="order-status">
+          <option value="Belum Lunas">Belum Lunas</option>
+          <option value="Lunas">Lunas</option>
+        </select>
+        <select id="order-method" disabled>
+          <option value="">-- Metode Bayar --</option>
+          <option value="Tunai">Tunai</option>
+          <option value="QRIS">QRIS</option>
+          <option value="Transfer">Transfer</option>
+        </select>
+        <input type="text" id="order-notes" placeholder="Catatan">
+      </div>
+      <button class="primary" id="btn-save-order">Buat Pesanan</button>
+    </section>
+
+    <!-- Pelanggan -->
+    <section class="page hidden" id="page-pelanggan">
+      <div class="card">
+        <h3>Pencarian</h3>
+        <input type="text" id="customer-search" placeholder="Cari nama atau WhatsApp">
+      </div>
+      <div class="card">
+        <h3>Daftar Pelanggan</h3>
+        <div id="customer-list">Memuat...</div>
+      </div>
+    </section>
+
+    <!-- Laporan -->
+    <section class="page hidden" id="page-laporan">
+      <div class="card">
+        <h3>Periode</h3>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+          <select id="report-period">
+            <option value="daily">Harian</option>
+            <option value="monthly">Bulanan</option>
+          </select>
+          <input type="month" id="report-month" style="display:none;">
+          <input type="date" id="report-from" placeholder="Dari">
+          <input type="date" id="report-to" placeholder="Sampai">
+          <button class="primary" id="btn-load-report">Tampilkan</button>
+        </div>
+      </div>
+      <div class="report" id="report-table">Pilih periode dan klik Tampilkan</div>
+    </section>
+
+    <!-- Menu -->
+    <section class="page hidden" id="page-menu">
+      <div class="card">
+        <h3>Daftar Menu</h3>
+        <div id="menu-list">Memuat...</div>
+      </div>
+    </section>
+
+    <!-- Nota -->
+    <section class="page hidden" id="page-nota">
+      <div class="card">
+        <h3>Pilih Nota</h3>
+        <select id="nota-select">
+          <option value="">-- Pilih Nota --</option>
+        </select>
+      </div>
+      <div id="nota-receipt" class="receipt hidden"></div>
+      <div style="margin-top:1rem;">
+        <button class="primary" id="btn-print-receipt">Cetak</button>
+        <button class="primary mt1" id="btn-copy-receipt">Salin Teks</button>
+      </div>
+    </section>
+
+    <!-- Keuangan -->
+    <section class="page hidden" id="page-keuangan">
+      <div class="card">
+        <h3>Ringkasan Cashflow</h3>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;">
+          <div><p style="color:#547792;font-size:.85rem;">Total Pemasukan</p><p class="money" id="total-income">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Total Pengeluaran</p><p class="money neg" id="total-expenses">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Cashflow Bersih</p><p class="money" id="net-cash">Rp 0</p></div>
+          <div><p style="color:#547792;font-size:.85rem;">Saldo Kas</p><p class="money" id="cash-balance">Rp 0</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Daftar Pengeluaran</h3>
+        <div id="expenses-list">Memuat...</div>
+      </div>
+      <div class="card">
+        <h3>Tambah Pengeluaran</h3>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;">
+          <div><label>Tanggal</label><input type="date" id="exp-date"></div>
+          <div><label>Kategori</label><select id="exp-category">
+            <option value="Beli Stok">Beli Stok</option>
+            <option value="Operasional">Operasional</option>
+            <option value="Lainnya">Lainnya</option>
+          </select></div>
+          <div><label>Keterangan</label><input type="text" id="exp-desc"></div>
+          <div><label>Nominal</label><input type="number" id="exp-amount" min="0"></div>
+          <div><label>Metode Bayar</label><select id="exp-method">
+            <option value="">-- Pilih --</option>
+            <option value="Tunai">Tunai</option>
+            <option value="QRIS">QRIS</option>
+            <option value="Transfer">Transfer</option>
+          </select></div>
+          <div><label>Catatan</label><input type="text" id="exp-notes"></div>
+        </div>
+        <button class="primary mt1" id="btn-save-expense">Simpan</button>
+      </div>
+    </section>
+
+    <!-- Pengaturan -->
+    <section class="page hidden" id="page-pengaturan">
+      <div class="card">
+        <h3>Pengaturan Bisnis</h3>
+        <div style="display:grid;gap:.75rem;">
+          <div><label>Nama Bisnis</label><input type="text" id="setting-business_name"></div>
+          <div><label>WhatsApp Pemilik</label><input type="tel" id="setting-owner_whatsapp"></div>
+          <div><label>URL Gambar QRIS</label><input type="url" id="setting-qris_url"></div>
+          <div><label>Footer Nota</label><input type="text" id="setting-invoice_footer"></div>
+          <div><label>Harga Default (Rp)</label><input type="number" id="setting-default_price" min="1"></div>
+          <div><label>Modal Default (Rp)</label><input type="number" id="setting-default_cost" min="0"></div>
+          <div><label>Prefix Nota</label><input type="text" id="setting-invoice_prefix"></div>
+          <div><label>Zona Waktu</label><input type="text" id="setting-timezone" value="Asia/Jakarta"></div>
+          <div><label>Mata Uang</label><input type="text" id="setting-currency" value="IDR"></div>
+          <button class="primary mt1" id="btn-save-settings">Simpan Pengaturan</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Impor Data Legacy</h3>
+        <p class="text-muted" style="font-size:.85rem;">Impor data dari file Excel lama. Pastikan Anda telah mengonversi file ke Google Sheets sebelum melanjutkan.</p>
+        <button class="primary mt1" id="btn-import-legacy">Mulai Impor</button>
+        <div id="import-status" class="mt1 text-center hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="bottom-nav">
+    <button data-page="beranda" class="nav-btn active">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      <span>Beranda</span>
+    </button>
+    <button data-page="pesanan" class="nav-btn">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17 18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10zm3-2V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12z"/><path d="M9 12h6v6H9z"/></svg>
+      <span>Pesanan</span>
+    </button>
+    <button data-page="pelanggan" class="nav-btn">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <span>Pelanggan</span>
+    </button>
+    <button data-page="laporan" class="nav-btn">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V7h14v12z"/><path d="M7 10h5v5H7zm6-6h5v5h-5zM7 7h5v5H7zm6 6h5v5h-5z"/></svg>
+      <span>Laporan</span>
+    </button>
+    <button data-page="lainnya" class="nav-btn">
+      <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h12v2H4zm0 4h12v2H4zm0-8h12v2H4zM19 6H7c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h12c.6 0 1-.4 1-1V7c0-.6-.4-1-1-1z"/></svg>
+      <span>Lainnya</span>
+    </button>
+  </nav>
+
+  <div id="sheet-lainnya" class="sheet">
+    <h3>Lainnya</h3>
+    <div class="grid">
+      <div class="tile" data-page="menu">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+        <span>Menu</span>
+      </div>
+      <div class="tile" data-page="nota">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/><path d="M8 12h8v2H8zm0-4h8v2H8z"/></svg>
+        <span>Nota</span>
+      </div>
+      <div class="tile" data-page="keuangan">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7z"/></svg>
+        <span>Keuangan</span>
+      </div>
+      <div class="tile" data-page="pengaturan">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M19.14 12a7.94 7.94 0 0 0-2.77-.86c-.31-.01-.56.24-.56.56 0 .31.24.56.56.56a7.94 7.94 0 0 1 2.77.86c.31.01.56-.24.56-.56 0-.31-.24-.56-.56-.56zm-4.8 0a7.94 7.94 0 0 0-2.77-.86c-.31-.01-.56.24-.56.56 0 .31.24.56.56.56a7.94 7.94 0 0 0 2.77.86c.31.01.56-.24.56-.56 0-.31-.24-.56-.56-.56z"/></svg>
+        <span>Pengaturan</span>
+      </div>
+    </div>
+    <button class="primary mt1" id="btn-close-sheet" style="background:#F3E8D8;color:#1A3263;border:none;padding:.75rem;border-radius:8px;cursor:pointer;">Tutup</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="modal-backdrop" class="hidden"></div>
+  <div id="modal" class="hidden">
+    <div class="card">
+      <div id="modal-content"></div>
+      <button class="primary mt1" id="btn-modal-close">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<?!= include('JS_Core.html'); ?>
+<?!= include('JS_Pages.html'); ?>
+<script>
+/* ---------- App Initialization ---------- */
+function appInit() {
+  // Load data on init
+  app.loadComponent();
+
+  // Setup global event listeners
+  setupGlobalListeners();
+
+  // Initial render
+  app.renderAll();
+}
+
+function setupGlobalListeners() {
+  // Bottom navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const target = e.currentTarget.dataset.page;
+      app.navigate(target);
+    });
+  });
+
+  // Lainnya sheet
+  document.querySelectorAll('.tile').forEach(tile => {
+    tile.addEventListener('click', (e) => {
+      const target = e.currentTarget.dataset.page;
+      app.navigate(target);
+    });
+  });
+
+  const closeSheet = document.getElementById('btn-close-sheet');
+  if (closeSheet) {
+    closeSheet.addEventListener('click', () => {
+      app.showSheet(false);
+    });
+  }
+
+  // Settings button
+  const settingsBtn = document.getElementById('btn-settings');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      app.navigate('pengaturan');
+    });
+  }
+
+  // Modal close
+  const modalClose = document.getElementById('btn-modal-close');
+  if (modalClose) {
+    modalClose.addEventListener('click', () => {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+      document.getElementById('modal').classList.add('hidden');
+    });
+  }
+  const backdrop = document.getElementById('modal-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      backdrop.classList.add('hidden');
+      document.getElementById('modal').classList.add('hidden');
+    });
+  }
+
+  // Print receipt
+  const printBtn = document.getElementById('btn-print-receipt');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // Copy receipt text
+  const copyBtn = document.getElementById('btn-copy-receipt');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const receipt = document.getElementById('nota-receipt');
+      if (!receipt || receipt.classList.contains('hidden')) {
+        app.showToast('Pilih nota terlebih dahulu');
+        return;
+      }
+      const text = receipt.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          app.showToast('Teks nota disalin');
+        });
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          app.showToast('Teks nota disalin');
+        } catch (err) {
+          app.showToast('Gagal menyalin teks');
+        }
+        document.body.removeChild(textarea);
+      }
+    });
+  }
+}
+
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  appInit();
+});
+
+// Handle hash-based navigation
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#', '');
+  if (hash) {
+    app.navigate(hash);
+  }
+});
+</script>
+</body>
+</html>

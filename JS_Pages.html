@@ -1,0 +1,504 @@
+<script>
+  /* ---------- Page Render Functions ---------- */
+  const renderFunctions = {
+    renderBeranda: function () {
+      // Render dashboard data
+      document.getElementById('today-portions').textContent = app.state.todayPortions || 0;
+      document.getElementById('today-omzet').textContent = app.money(app.state.todayOmzet || 0);
+      document.getElementById('today-margin').textContent = app.money(app.state.todayMargin || 0);
+
+      document.getElementById('month-label').textContent = app.state.monthLabel || '';
+      document.getElementById('month-portions').textContent = app.state.monthPortions || 0;
+      document.getElementById('month-omzet').textContent = app.money(app.state.monthOmzet || 0);
+      document.getElementById('month-margin').textContent = app.money(app.state.monthMargin || 0);
+
+      this.renderTodayOrders();
+      this.renderReceivables();
+      this.renderCashflow();
+      this.renderQRIS();
+    },
+
+    renderTodayOrders: function () {
+      const container = document.getElementById('today-orders-summary');
+      if (!app.state.todayOrders || app.state.todayOrders.length === 0) {
+        container.innerHTML = '<p class="text-muted">Tidak ada pesanan hari ini</p>';
+        return;
+      }
+
+      let html = '<div class="order-summary">';
+      app.state.todayOrders.forEach(order => {
+        html += `<div class="order-item" style="padding:.5rem;margin:.5rem 0;background:#F3E8D8;border-radius:8px;">
+        <div style="font-weight:600;">${order.invoice_no} - ${order.customer_name}</div>
+        <div style="font-size:.9rem;color:#547792;">${order.menu_label} x${order.qty}</div>
+        <div style="font-size:.9rem;">${order.payment_status === 'Lunas' ? 'Lunas' : 'Belum Lunas'}</div>
+      </div>`;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    },
+
+    renderReceivables: function () {
+      const container = document.getElementById('receivables-list');
+      if (!app.state.unpaid || app.state.unpaid.length === 0) {
+        container.innerHTML = '<p class="text-muted">Tidak ada piutang</p>';
+        return;
+      }
+
+      let html = '';
+      app.state.unpaid.forEach(item => {
+        html += `<div class="receivable-item" style="padding:.75rem;margin:.5rem 0;background:#fff;border-radius:8px;border-left:4px solid #FFC570;">
+        <div style="font-weight:600;">${item.invoice_no} - ${item.customer_name}</div>
+        <div style="font-size:.9rem;color:#547792;">${item.delivery_date} - ${app.money(item.amount)}</div>
+        <a href="https://wa.me/${item.whatsapp.startsWith('62') ? item.whatsapp : '62' + item.whatsapp}" target="_blank" style="display:inline-block;margin-top:.5rem;color:#1A3263;font-size:.85rem;text-decoration:none;">Chat WhatsApp</a>
+      </div>`;
+      });
+      container.innerHTML = html;
+    },
+
+    renderCashflow: function () {
+      document.getElementById('cash-tunai').textContent = app.money(app.state.cashTunai || 0);
+      document.getElementById('cash-qris').textContent = app.money(app.state.cashQRIS || 0);
+      document.getElementById('cash-transfer').textContent = app.money(app.state.cashTransfer || 0);
+      document.getElementById('cash-total').textContent = app.money(app.state.cashTotal || 0);
+      document.getElementById('expenses-month').textContent = app.money(app.state.expensesMonth || 0);
+      document.getElementById('net-cash-month').textContent = app.money(app.state.netCashMonth || 0);
+    },
+
+    renderQRIS: function () {
+      const qrisImage = document.getElementById('qris-image');
+      const qrisPlaceholder = document.getElementById('qris-placeholder');
+
+      if (app.state.settings.qris_url) {
+        qrisImage.src = app.state.settings.qris_url;
+        qrisImage.classList.remove('hidden');
+        qrisPlaceholder.classList.add('hidden');
+      } else {
+        qrisImage.classList.add('hidden');
+        qrisPlaceholder.classList.remove('hidden');
+      }
+    },
+
+    /* ---------- Orders Render ---------- */
+    renderPesanan: async function () {
+      // Setup date picker
+      const today = app.state.today;
+      document.getElementById('order-date').value = today;
+      document.getElementById('order-date').addEventListener('change', (e) => {
+        // Reload orders for selected date
+        app.loadOrders();
+      });
+
+      // Setup customer select
+      const customerSelect = document.getElementById('customer-select');
+      customerSelect.innerHTML = '<option value="">-- Pilih Pelanggan --</option>';
+      app.state.customers.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.customer_id;
+        option.textContent = customer.name;
+        customerSelect.appendChild(option);
+      });
+
+      // Setup menu selects
+      const menu1Select = document.getElementById('menu1-select');
+      const menu2Select = document.getElementById('menu2-select');
+      menu1Select.innerHTML = '<option value="">-- Pilih Menu 1 --</option>';
+      app.state.menu.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.menu_id;
+        option.textContent = item.name;
+        menu1Select.appendChild(option);
+      });
+      menu2Select.innerHTML = '<option value="">-- Pilih Menu 2 (opsional) --</option>';
+      app.state.menu.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.menu_id;
+        option.textContent = item.name;
+        menu2Select.appendChild(option);
+      });
+
+      // Setup status change handler
+      const statusSelect = document.getElementById('order-status');
+      const methodSelect = document.getElementById('order-method');
+      statusSelect.addEventListener('change', () => {
+        if (statusSelect.value === 'Lunas') {
+          methodSelect.disabled = false;
+          if (!methodSelect.value) methodSelect.focus();
+        } else {
+          methodSelect.disabled = true;
+          methodSelect.value = '';
+        }
+      });
+
+      // Setup save button
+      const form = document.getElementById('btn-save-order');
+      if (form) {
+        form.onclick = async () => {
+          try {
+            const payload = {
+              delivery_date: document.getElementById('order-date').value,
+              customer_id: document.getElementById('customer-select').value,
+              menu1_id: document.getElementById('menu1-select').value,
+              menu2_id: document.getElementById('menu2-select').value || '',
+              qty: parseInt(document.getElementById('order-qty').value) || 1,
+              payment_status: document.getElementById('order-status').value,
+              payment_method: document.getElementById('order-method').value,
+              notes: document.getElementById('order-notes').value
+            };
+            const result = await app.call('createOrder', payload);
+            app.showToast('Pesanan berhasil dibuat: ' + result.order.invoice_no);
+            await app.loadOrders();
+            await app.loadDashboard();
+            this.renderPesanan();
+          } catch (err) {
+            app.showToast(err.message || 'Gagal membuat pesanan');
+          }
+        };
+      }
+    },
+
+    /* ---------- Customers Render ---------- */
+    renderPelanggan: async function () {
+      const searchInput = document.getElementById('customer-search');
+      const renderList = () => {
+        const term = searchInput.value.toLowerCase();
+        const filtered = app.state.customers.filter(c =>
+          c.name.toLowerCase().includes(term) ||
+          c.whatsapp.includes(term)
+        );
+        const container = document.getElementById('customer-list');
+        if (!filtered.length) {
+          container.innerHTML = '<p class="text-muted">Tidak ada pelanggan</p>';
+          return;
+        }
+        let html = '';
+        filtered.forEach(customer => {
+          html += `<div class="customer-item card" style="margin-bottom:.75rem;cursor:pointer;" data-id="${customer.customer_id}">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;">${customer.name}</div>
+              <div style="font-size:.9rem;color:#547792;">${customer.whatsapp ? 'WhatsApp: ' + customer.whatsapp : 'Tidak ada WhatsApp'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:.85rem;">${customer.order_count || 0} pesanan</div>
+              <div style="font-size:.85rem;color:#547792;">Total: ${app.money(customer.total_spent || 0)}</div>
+            </div>
+          </div>
+        </div>`;
+        });
+        container.innerHTML = html;
+      };
+
+      // Debounced search
+      let debounceTimer;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => renderList(), 300);
+      });
+      renderList();
+
+      // Setup add customer button
+      const addBtn = document.getElementById('btn-add-customer');
+      if (addBtn) {
+        addBtn.onclick = async () => {
+          const name = document.getElementById('new-customer-name').value.trim();
+          if (!name) {
+            app.showToast('Nama pelanggan wajib diisi');
+            return;
+          }
+          try {
+            const result = await app.call('saveCustomer', { name });
+            app.showToast('Pelanggan berhasil ditambahkan: ' + result.customer.name);
+            document.getElementById('new-customer-name').value = '';
+            await app.loadCustomers();
+            this.renderPelanggan();
+          } catch (err) {
+            app.showToast(err.message || 'Gagal menambahkan pelanggan');
+          }
+        };
+      }
+    },
+
+    /* ---------- Menu Render ---------- */
+    renderMenu: async function () {
+      const container = document.getElementById('menu-list');
+      if (!app.state.menu.length) {
+        container.innerHTML = '<p class="text-muted">Memuat menu...</p>';
+        return;
+      }
+      let html = '';
+      app.state.menu.forEach(item => {
+        html += `<div class="menu-item card" style="margin-bottom:.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:600;">${item.name} <span style="color:#547792;font-weight:400;">(${item.short_name})</span></div>
+            <div style="font-size:.9rem;">Harga: ${app.money(item.price)} | Modal: ${app.money(item.cost)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:.9rem;">Urutan: ${item.sort_order}</div>
+            <div style="font-size:.9rem;">Status: ${item.active ? 'Aktif' : 'Nonaktif'}</div>
+          </div>
+        </div>
+      </div>`;
+      });
+      container.innerHTML = html;
+    },
+
+    /* ---------- Nota Render ---------- */
+    renderNota: async function () {
+      const select = document.getElementById('nota-select');
+      select.innerHTML = '<option value="">-- Pilih Nota --</option>';
+      const validOrders = app.state.orders.filter(o => o.order_status !== 'Batal');
+      validOrders.forEach(order => {
+        const option = document.createElement('option');
+        option.value = order.invoice_no;
+        option.textContent = order.invoice_no + ' - ' + order.customer_name + ' (' + order.delivery_date + ')';
+        select.appendChild(option);
+      });
+      select.addEventListener('change', (e) => {
+        if (e.target.value) {
+          this.generateReceipt(e.target.value);
+        } else {
+          document.getElementById('nota-receipt').classList.add('hidden');
+        }
+      });
+    },
+
+    generateReceipt: async function (invoiceNo) {
+      try {
+        const result = await app.call('getOrder', { invoice_no: invoiceNo });
+        const order = result.order;
+        const settings = result.settings;
+        let receiptHTML = `
+        <div class="receipt">
+          <h3 style="margin-bottom:.5rem;">${settings.business_name || 'Nasi Cokot Daisafa'}</h3>
+          <div class="line"><span>Nota:</span><span>${order.invoice_no}</span></div>
+          <div class="line"><span>Tanggal:</span><span>${order.delivery_date}</span></div>
+          <div class="line"><span>Pelanggan:</span><span>${order.customer_name}</span></div>
+          <div class="line"><span>Menu:</span><span>${order.menu_label} x${order.qty}</span></div>
+          <div class="line"><span>Jumlah:</span><span>${app.money(order.line_total)}</span></div>
+          <div class="line"><span>Status:</span><span>${order.payment_status}</span></div>
+          <div class="footer">${settings.invoice_footer || 'Terima kasih!'}</div>
+        </div>
+      `;
+        document.getElementById('nota-receipt').innerHTML = receiptHTML;
+        document.getElementById('nota-receipt').classList.remove('hidden');
+      } catch (err) {
+        app.showToast(err.message || 'Gagal memuat nota');
+        document.getElementById('nota-receipt').classList.add('hidden');
+      }
+    },
+
+    /* ---------- Keuangan Render ---------- */
+    renderKeuangan: async function () {
+      if (!app.state.expenses.length) await app.loadExpenses();
+      this.renderCashflowPage();
+      this.renderExpensesList();
+      this.setupExpenseForm();
+    },
+
+    renderCashflowPage: function () {
+      const today = app.state.today;
+      const monthKey = today.slice(0, 7);
+      const paidOrders = app.state.orders.filter(o =>
+        o.payment_status === 'Lunas' &&
+        o.delivery_date.startsWith(monthKey)
+      );
+      const totalIncome = paidOrders.reduce((sum, o) => sum + (o.line_total || 0), 0);
+      document.getElementById('total-income').textContent = app.money(totalIncome);
+      const totalExpenses = app.state.expenses
+        .filter(e => e.expense_date.startsWith(monthKey))
+        .reduce((sum, e) => sum + (e.amount || 0), 0);
+      document.getElementById('total-expenses').textContent = app.money(totalExpenses);
+      const netCash = totalIncome - totalExpenses;
+      document.getElementById('net-cash').textContent = app.money(netCash);
+      const allIncome = app.state.orders
+        .filter(o => o.payment_status === 'Lunas')
+        .reduce((sum, o) => sum + (o.line_total || 0), 0);
+      const allExpenses = app.state.expenses
+        .reduce((sum, e) => sum + (e.amount || 0), 0);
+      const cashBalance = allIncome - allExpenses;
+      document.getElementById('cash-balance').textContent = app.money(cashBalance);
+    },
+
+    renderExpensesList: function () {
+      const container = document.getElementById('expenses-list');
+      if (!app.state.expenses.length) {
+        container.innerHTML = '<p class="text-muted">Tidak ada pengeluaran</p>';
+        return;
+      }
+      let html = '';
+      app.state.expenses.forEach(expense => {
+        html += `<div class="expense-item card" style="margin-bottom:.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:600;">${expense.description}</div>
+            <div style="font-size:.9rem;color:#547792;">${expense.expense_date} - ${expense.category}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:600;color:#1A3263;">${app.money(expense.amount)}</div>
+            <div style="font-size:.85rem;color:#547792;">${expense.payment_method || ''}</div>
+          </div>
+        </div>
+      </div>`;
+      });
+      container.innerHTML = html;
+    },
+
+    setupExpenseForm: function () {
+      const formBtn = document.getElementById('btn-save-expense');
+      if (formBtn) {
+        formBtn.onclick = async () => {
+          const payload = {
+            expense_date: document.getElementById('exp-date').value,
+            category: document.getElementById('exp-category').value,
+            description: document.getElementById('exp-desc').value,
+            amount: parseInt(document.getElementById('exp-amount').value) || 0,
+            payment_method: document.getElementById('exp-method').value,
+            notes: document.getElementById('exp-notes').value
+          };
+          try {
+            const result = await app.call('saveExpense', payload);
+            app.showToast('Pengeluaran berhasil disimpan: ' + result.expense.expense_id);
+            document.getElementById('exp-date').value = '';
+            document.getElementById('exp-desc').value = '';
+            document.getElementById('exp-amount').value = '';
+            document.getElementById('exp-method').value = '';
+            document.getElementById('exp-notes').value = '';
+            await app.loadExpenses();
+            await app.loadDashboard();
+            this.renderKeuangan();
+          } catch (err) {
+            app.showToast(err.message || 'Gagal menyimpan pengeluaran');
+          }
+        };
+      }
+    },
+
+    /* ---------- Laporan Render ---------- */
+    renderLaporan: async function () {
+      const periodSelect = document.getElementById('report-period');
+      const monthInput = document.getElementById('report-month');
+      const fromInput = document.getElementById('report-from');
+      const toInput = document.getElementById('report-to');
+      const loadBtn = document.getElementById('btn-load-report');
+      periodSelect.addEventListener('change', () => {
+        if (periodSelect.value === 'monthly') {
+          monthInput.style.display = 'block';
+          fromInput.style.display = 'none';
+          toInput.style.display = 'none';
+        } else {
+          monthInput.style.display = 'none';
+          fromInput.style.display = 'block';
+          toInput.style.display = 'block';
+        }
+      });
+      const today = app.state.today;
+      fromInput.value = today;
+      toInput.value = today;
+      loadBtn.onclick = async () => {
+        try {
+          let payload = { period: periodSelect.value };
+          if (periodSelect.value === 'monthly') {
+            payload.month = monthInput.value;
+          } else {
+            payload.from = fromInput.value;
+            payload.to = toInput.value;
+          }
+          const result = await app.call('report', payload);
+          this.renderReport(result);
+        } catch (err) {
+          app.showToast(err.message || 'Gagal memuat laporan');
+        }
+      };
+    },
+
+    renderReport: function (result) {
+      const container = document.getElementById('report-table');
+      if (!result.rows || result.rows.length === 0) {
+        container.innerHTML = '<p class="text-muted">Tidak ada data untuk periode yang dipilih</p>';
+        return;
+      }
+      let html = `
+      <div class="report-header" style="margin-bottom:1rem;">
+        <div style="font-weight:600;color:#1A3263;">${result.period === 'monthly' ? 'Laporan Bulanan' : 'Laporan Harian'}</div>
+        <div style="font-size:.9rem;color:#547792;">Periode: ${result.rows[0].label}</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th style="text-align:right;">Porsi</th>
+            <th style="text-align:right;">Omzet</th>
+            <th style="text-align:right;">Margin</th>
+            <th style="text-align:right;">Pengeluaran</th>
+            <th style="text-align:right;">Net Cash</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+      result.rows.forEach(row => {
+        html += `
+        <tr>
+          <td>${row.label}</td>
+          <td style="text-align:right;">${row.portions}</td>
+          <td style="text-align:right;">${app.money(row.omzet)}</td>
+          <td style="text-align:right;">${app.money(row.margin)}</td>
+          <td style="text-align:right;">${app.money(row.expenses)}</td>
+          <td style="text-align:right;font-weight:600;color:${row.net_cash >= 0 ? '#1A3263' : '#A60000'};">${app.money(row.net_cash)}</td>
+        </tr>
+      `;
+      });
+      html += `
+        </tbody>
+        <tfoot>
+          <tr class="total">
+            <td>Total</td>
+            <td style="text-align:right;">${result.totals.portions}</td>
+            <td style="text-align:right;">${app.money(result.totals.omzet)}</td>
+            <td style="text-align:right;">${app.money(result.totals.margin)}</td>
+            <td style="text-align:right;">${app.money(result.totals.expenses)}</td>
+            <td style="text-align:right;">${app.money(result.totals.net_cash)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+      container.innerHTML = html;
+    },
+
+    /* ---------- Pengaturan Render ---------- */
+    renderPengaturan: async function () {
+      const importBtn = document.getElementById('btn-import-legacy');
+      if (importBtn) {
+        importBtn.onclick = async () => {
+          const statusDiv = document.getElementById('import-status');
+          statusDiv.classList.remove('hidden');
+          statusDiv.innerHTML = '<p style="color:#1A3263;">Memulai impor...</p>';
+          try {
+            const result = await app.call('importLegacy', { confirm: true });
+            if (result.already) {
+              statusDiv.innerHTML = '<p style="color:#547792;">Data sudah diimpor sebelumnya.</p>';
+            } else {
+              statusDiv.innerHTML = `
+              <div style="margin-top:.75rem;">
+                <p style="color:#1A3263;">Impor selesai!</p>
+                <ul style="list-style:none;padding:0;margin:.5rem 0 0;">
+                  <li style="margin:.25rem 0;">Pelanggan: ${result.counts.customers}</li>
+                  <li style="margin:.25rem 0;">Pesanan: ${result.counts.orders}</li>
+                  <li style="margin:.25rem 0;">Pengeluaran: ${result.counts.expenses}</li>
+                  <li style="margin:.25rem 0;">Duplikat: ${result.counts.duplicates}</li>
+                  <li style="margin:.25rem 0;">Dilewati: ${result.counts.skipped}</li>
+                </ul>
+                <div style="margin-top:.75rem;">
+                  <button class="primary" onclick="app.showToast('Lihat Import_Log di Spreadsheet untuk detail')">Lihat Log</button>
+                </div>
+              </div>
+            `;
+            }
+          } catch (err) {
+            statusDiv.innerHTML = '<p style="color:#A60000;">Error: ' + (err.message || 'Gagal mengimpor data') + '</p>';
+          }
+        };
+      }
+    }
+  };
+</script>

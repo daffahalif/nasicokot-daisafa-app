@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width"><title>https://hartaku.web.id/</title><link rel="stylesheet" type="text/css" href="resource://content-accessible/viewsource.css"></head><body id="viewsource" style="tab-size: 4"><span id="line1"><span></span><span class="doctype">&lt;!doctype html&gt;</span><span>
+</span></span><span id="line2"><span></span><span>&lt;<span class="start-tag">html</span> <span class="attribute-name">lang</span>="<a class="attribute-value">id</a>"&gt;</span><span>
+</span></span><span id="line3"><span>  </span><span>&lt;<span class="start-tag">head</span>&gt;</span><span>
+</span></span><span id="line4"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">charset</span>="<a class="attribute-value">UTF-8</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line5"><span>    </span><span>&lt;<span class="start-tag">meta</span>
+</span></span><span id="line6"><span>      <span class="attribute-name">name</span>="<a class="attribute-value">viewport</a>"
+</span></span><span id="line7"><span>      <span class="attribute-name">content</span>="<a class="attribute-value">width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover</a>"
+</span></span><span id="line8"><span>    <span>/</span>&gt;</span><span>
+</span></span><span id="line9"><span>    </span><span>&lt;<span class="start-tag">title</span>&gt;</span><span>Hartaku — Pencatat keuangan pribadi di Google Spreadsheet milikmu</span><span>&lt;/<span class="end-tag">title</span>&gt;</span><span>
+</span></span><span id="line10"><span>    </span><span>&lt;<span class="start-tag">meta</span>
+</span></span><span id="line11"><span>      <span class="attribute-name">name</span>="<a class="attribute-value">description</a>"
+</span></span><span id="line12"><span>      <span class="attribute-name">content</span>="<a class="attribute-value">Hartaku adalah aplikasi pencatat keuangan pribadi. Catat pemasukan, pengeluaran, transfer antar akun, dan investasi emas — semuanya tersimpan di Google Spreadsheet di dalam Google Drive milikmu sendiri, bukan di server kami.</a>"
+</span></span><span id="line13"><span>    <span>/</span>&gt;</span><span>
+</span></span><span id="line14"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">property</span>="<a class="attribute-value">og:title</a>" <span class="attribute-name">content</span>="<a class="attribute-value">Hartaku</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line15"><span>    </span><span>&lt;<span class="start-tag">meta</span>
+</span></span><span id="line16"><span>      <span class="attribute-name">property</span>="<a class="attribute-value">og:description</a>"
+</span></span><span id="line17"><span>      <span class="attribute-name">content</span>="<a class="attribute-value">Catat pemasukan, pengeluaran, transfer antar akun, dan investasi emas. Datamu tersimpan di Google Spreadsheet milikmu sendiri.</a>"
+</span></span><span id="line18"><span>    <span>/</span>&gt;</span><span>
+</span></span><span id="line19"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">property</span>="<a class="attribute-value">og:type</a>" <span class="attribute-name">content</span>="<a class="attribute-value">website</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line20"><span>
+</span></span><span id="line21"><span>    </span><span class="comment">&lt;!--
+</span></span><span id="line22"><span class="comment">      Matches the canvas so the status bar blends with the page. Deliberately one
+</span></span><span id="line23"><span class="comment">      tag with no `media`: the theme is a saved setting rather than an OS
+</span></span><span id="line24"><span class="comment">      preference, and a media query has no way to express Laut or Bunga at all.
+</span></span><span id="line25"><span class="comment">      The script below and SettingsContext keep the value in step.
+</span></span><span id="line26"><span class="comment">    --&gt;</span><span>
+</span></span><span id="line27"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">name</span>="<a class="attribute-value">theme-color</a>" <span class="attribute-name">content</span>="<a class="attribute-value">#f6f7fb</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line28"><span>
+</span></span><span id="line29"><span>    </span><span>&lt;<span class="start-tag">link</span> <span class="attribute-name">rel</span>="<a class="attribute-value">manifest</a>" <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/manifest.webmanifest">/manifest.webmanifest</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line30"><span>    </span><span class="comment">&lt;!-- A raster mark rather than the SVG that used to sit here: the logo is
+</span></span><span id="line31"><span class="comment">         artwork, not two strokes, and there is no vector of it to serve. --&gt;</span><span>
+</span></span><span id="line32"><span>    </span><span>&lt;<span class="start-tag">link</span> <span class="attribute-name">rel</span>="<a class="attribute-value">icon</a>" <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/favicon.png">/favicon.png</a>" <span class="attribute-name">type</span>="<a class="attribute-value">image/png</a>" <span class="attribute-name">sizes</span>="<a class="attribute-value">96x96</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line33"><span>    </span><span>&lt;<span class="start-tag">link</span> <span class="attribute-name">rel</span>="<a class="attribute-value">apple-touch-icon</a>" <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/apple-touch-icon.png">/apple-touch-icon.png</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line34"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">name</span>="<a class="attribute-value">apple-mobile-web-app-capable</a>" <span class="attribute-name">content</span>="<a class="attribute-value">yes</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line35"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">name</span>="<a class="attribute-value">apple-mobile-web-app-title</a>" <span class="attribute-name">content</span>="<a class="attribute-value">Hartaku</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line36"><span>    </span><span>&lt;<span class="start-tag">meta</span> <span class="attribute-name">name</span>="<a class="attribute-value">mobile-web-app-capable</a>" <span class="attribute-name">content</span>="<a class="attribute-value">yes</a>" <span>/</span>&gt;</span><span>
+</span></span><span id="line37"><span>
+</span></span><span id="line38"><span>    </span><span>&lt;<span class="start-tag">script</span>&gt;</span><span>
+</span></span><span id="line39"><span>      // Applied before first paint so the theme never flashes.
+</span></span><span id="line40"><span>      try {
+</span></span><span id="line41"><span>        const saved = JSON.parse(localStorage.getItem('hartaku.settings') || '{}')
+</span></span><span id="line42"><span>        const theme = saved.theme || 'auto'
+</span></span><span id="line43"><span>        const root = document.documentElement
+</span></span><span id="line44"><span>
+</span></span><span id="line45"><span>        root.dataset.theme =
+</span></span><span id="line46"><span>          theme !== 'auto'
+</span></span><span id="line47"><span>            ? theme
+</span></span><span id="line48"><span>            : window.matchMedia('(prefers-color-scheme: dark)').matches
+</span></span><span id="line49"><span>              ? 'dark'
+</span></span><span id="line50"><span>              : 'light'
+</span></span><span id="line51"><span>
+</span></span><span id="line52"><span>        // Only works once the stylesheet has parsed, which is why it is guarded
+</span></span><span id="line53"><span>        // rather than assumed - SettingsContext sets it properly on mount, so
+</span></span><span id="line54"><span>        // the worst case here is the status bar catching up a frame later. No
+</span></span><span id="line55"><span>        // palette is copied into this file.
+</span></span><span id="line56"><span>        const canvas = getComputedStyle(root).getPropertyValue('--canvas').trim()
+</span></span><span id="line57"><span>        if (canvas) {
+</span></span><span id="line58"><span>          document
+</span></span><span id="line59"><span>            .querySelector('meta[name="theme-color"]')
+</span></span><span id="line60"><span>            .setAttribute('content', 'rgb(' + canvas + ')')
+</span></span><span id="line61"><span>        }
+</span></span><span id="line62"><span>      } catch (_) {}
+</span></span><span id="line63"><span>    </span><span>&lt;/<span class="end-tag">script</span>&gt;</span><span>
+</span></span><span id="line64"><span>    </span><span>&lt;<span class="start-tag">script</span> <span class="attribute-name">type</span>="<a class="attribute-value">module</a>" <span class="attribute-name">crossorigin</span> <span class="attribute-name">src</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/assets/index-D-Pw_vwG.js">/assets/index-D-Pw_vwG.js</a>"&gt;</span><span></span><span>&lt;/<span class="end-tag">script</span>&gt;</span><span>
+</span></span><span id="line65"><span>    </span><span>&lt;<span class="start-tag">link</span> <span class="attribute-name">rel</span>="<a class="attribute-value">stylesheet</a>" <span class="attribute-name">crossorigin</span> <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/assets/index-BabP3OrC.css">/assets/index-BabP3OrC.css</a>"&gt;</span><span>
+</span></span><span id="line66"><span>  </span><span>&lt;/<span class="end-tag">head</span>&gt;</span><span>
+</span></span><span id="line67"><span>  </span><span>&lt;<span class="start-tag">body</span>&gt;</span><span>
+</span></span><span id="line68"><span>    </span><span class="comment">&lt;!--
+</span></span><span id="line69"><span class="comment">      React replaces everything inside #root on mount, so what lands here is only
+</span></span><span id="line70"><span class="comment">      ever seen by something that runs no JavaScript - a crawler, or Google's
+</span></span><span id="line71"><span class="comment">      OAuth branding review, which reads this page to check the app name and
+</span></span><span id="line72"><span class="comment">      purpose.
+</span></span><span id="line73"><span class="comment">
+</span></span><span id="line74"><span class="comment">      The placeholder below is filled at build time from src/lib/landing.js by
+</span></span><span id="line75"><span class="comment">      the landingHtmlPlugin in vite.config.js - the same object the React landing
+</span></span><span id="line76"><span class="comment">      page renders. Keep it a placeholder: two hand-written copies silently
+</span></span><span id="line77"><span class="comment">      disagreeing is what made the review fail in the first place.
+</span></span><span id="line78"><span class="comment">    --&gt;</span><span>
+</span></span><span id="line79"><span>    </span><span>&lt;<span class="start-tag">div</span> <span class="attribute-name">id</span>="<a class="attribute-value">root</a>"&gt;</span><span>
+</span></span><span id="line80"><span>      </span><span>&lt;<span class="start-tag">main</span> <span class="attribute-name">class</span>="<a class="attribute-value">mx-auto w-full max-w-lg px-page py-8</a>"&gt;</span><span>
+</span></span><span id="line81"><span>        </span><span>&lt;<span class="start-tag">header</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-center</a>"&gt;</span><span>
+</span></span><span id="line82"><span>          </span><span>&lt;<span class="start-tag">div</span> <span class="attribute-name">class</span>="<a class="attribute-value">mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-brand-500 text-[26px]</a>"&gt;</span><span>💸</span><span>&lt;/<span class="end-tag">div</span>&gt;</span><span>
+</span></span><span id="line83"><span>          </span><span>&lt;<span class="start-tag">h1</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-page-title font-bold tracking-tight</a>"&gt;</span><span>Hartaku</span><span>&lt;/<span class="end-tag">h1</span>&gt;</span><span>
+</span></span><span id="line84"><span>          </span><span>&lt;<span class="start-tag">p</span> <span class="attribute-name">class</span>="<a class="attribute-value">mx-auto mt-2 max-w-sm text-body text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Pencatat keuangan pribadi yang menyimpan datamu di Google Spreadsheet milikmu sendiri.</span><span>&lt;/<span class="end-tag">p</span>&gt;</span><span>
+</span></span><span id="line85"><span>        </span><span>&lt;/<span class="end-tag">header</span>&gt;</span><span>
+</span></span><span id="line86"><span>
+</span></span><span id="line87"><span>        </span><span>&lt;<span class="start-tag">section</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-6</a>"&gt;</span><span>
+</span></span><span id="line88"><span>          </span><span>&lt;<span class="start-tag">h2</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-section-title font-semibold</a>"&gt;</span><span>Apa itu Hartaku</span><span>&lt;/<span class="end-tag">h2</span>&gt;</span><span>
+</span></span><span id="line89"><span>          </span><span>&lt;<span class="start-tag">p</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-1.5 text-body text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Hartaku dipakai untuk mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas dalam satu tempat, lalu meringkasnya jadi total aset dan kewajiban. Setiap catatan keuangan ditulis langsung ke sebuah Google Spreadsheet di dalam Google Drive kamu, bukan ke database Hartaku. Datanya tetap bisa kamu buka, ubah, ekspor, atau hapus kapan saja tanpa lewat aplikasi ini.</span><span>&lt;/<span class="end-tag">p</span>&gt;</span><span>
+</span></span><span id="line90"><span>        </span><span>&lt;/<span class="end-tag">section</span>&gt;</span><span>
+</span></span><span id="line91"><span>
+</span></span><span id="line92"><span>        </span><span>&lt;<span class="start-tag">section</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-8</a>"&gt;</span><span>
+</span></span><span id="line93"><span>          </span><span>&lt;<span class="start-tag">h2</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-section-title font-semibold</a>"&gt;</span><span>Yang bisa dilakukan</span><span>&lt;/<span class="end-tag">h2</span>&gt;</span><span>
+</span></span><span id="line94"><span>          </span><span>&lt;<span class="start-tag">ul</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-2 space-y-3</a>"&gt;</span><span>
+</span></span><span id="line95"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line96"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">text-[17px] leading-6</a>"&gt;</span><span>📊</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line97"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">min-w-0</a>"&gt;</span><span>
+</span></span><span id="line98"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-body font-medium</a>"&gt;</span><span>Ringkasan bulanan</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line99"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Pemasukan, pengeluaran, dan selisihnya per bulan, dengan rincian kategori pengeluaran terbesar.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line100"><span>              </span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line101"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line102"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line103"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">text-[17px] leading-6</a>"&gt;</span><span>🏦</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line104"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">min-w-0</a>"&gt;</span><span>
+</span></span><span id="line105"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-body font-medium</a>"&gt;</span><span>Banyak akun</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line106"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Tunai, bank, e-wallet, piutang, dan utang — lengkap dengan transfer antar akun serta total aset dan kewajiban.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line107"><span>              </span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line108"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line109"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line110"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">text-[17px] leading-6</a>"&gt;</span><span>🥇</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line111"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">min-w-0</a>"&gt;</span><span>
+</span></span><span id="line112"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-body font-medium</a>"&gt;</span><span>Investasi emas</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line113"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Catat gramasi dan harga beli, lalu nilainya dihitung memakai harga buyback harian beserta untung atau ruginya.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line114"><span>              </span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line115"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line116"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line117"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">text-[17px] leading-6</a>"&gt;</span><span>🧾</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line118"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">min-w-0</a>"&gt;</span><span>
+</span></span><span id="line119"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-body font-medium</a>"&gt;</span><span>Import dari screenshot</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line120"><span>                </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">block text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Bukti transfer atau daftar mutasi dibaca otomatis. Pemrosesan gambarnya berjalan di perangkatmu, gambarnya tidak diunggah ke mana pun.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line121"><span>              </span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line122"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line123"><span>          </span><span>&lt;/<span class="end-tag">ul</span>&gt;</span><span>
+</span></span><span id="line124"><span>        </span><span>&lt;/<span class="end-tag">section</span>&gt;</span><span>
+</span></span><span id="line125"><span>
+</span></span><span id="line126"><span>        </span><span>&lt;<span class="start-tag">section</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-8</a>"&gt;</span><span>
+</span></span><span id="line127"><span>          </span><span>&lt;<span class="start-tag">h2</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-section-title font-semibold</a>"&gt;</span><span>Cara kerjanya</span><span>&lt;/<span class="end-tag">h2</span>&gt;</span><span>
+</span></span><span id="line128"><span>          </span><span>&lt;<span class="start-tag">ol</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-2 space-y-2</a>"&gt;</span><span>
+</span></span><span id="line129"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line130"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200</a>"&gt;</span><span>1</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line131"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Masuk dengan akun Google kamu.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line132"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line133"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line134"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200</a>"&gt;</span><span>2</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line135"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Hartaku membuatkan satu spreadsheet bernama "Hartaku - Expense Tracker" di Google Drive kamu.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line136"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line137"><span>            </span><span>&lt;<span class="start-tag">li</span> <span class="attribute-name">class</span>="<a class="attribute-value">flex items-start gap-2.5</a>"&gt;</span><span>
+</span></span><span id="line138"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">aria-hidden</span>="<a class="attribute-value">true</a>" <span class="attribute-name">class</span>="<a class="attribute-value">mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200</a>"&gt;</span><span>3</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line139"><span>              </span><span>&lt;<span class="start-tag">span</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Setiap transaksi yang kamu catat ditulis ke spreadsheet itu, dan dibaca kembali dari sana.</span><span>&lt;/<span class="end-tag">span</span>&gt;</span><span>
+</span></span><span id="line140"><span>            </span><span>&lt;/<span class="end-tag">li</span>&gt;</span><span>
+</span></span><span id="line141"><span>          </span><span>&lt;/<span class="end-tag">ol</span>&gt;</span><span>
+</span></span><span id="line142"><span>        </span><span>&lt;/<span class="end-tag">section</span>&gt;</span><span>
+</span></span><span id="line143"><span>
+</span></span><span id="line144"><span>        </span><span>&lt;<span class="start-tag">section</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-8</a>"&gt;</span><span>
+</span></span><span id="line145"><span>          </span><span>&lt;<span class="start-tag">h2</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-section-title font-semibold</a>"&gt;</span><span>Data yang diakses dan alasannya</span><span>&lt;/<span class="end-tag">h2</span>&gt;</span><span>
+</span></span><span id="line146"><span>          </span><span>&lt;<span class="start-tag">dl</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-2 space-y-3</a>"&gt;</span><span>
+</span></span><span id="line147"><span>            </span><span>&lt;<span class="start-tag">div</span>&gt;</span><span>
+</span></span><span id="line148"><span>              </span><span>&lt;<span class="start-tag">dt</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-body font-medium</a>"&gt;</span><span>Nama, alamat email, dan foto profil Google</span><span>&lt;/<span class="end-tag">dt</span>&gt;</span><span>
+</span></span><span id="line149"><span>              </span><span>&lt;<span class="start-tag">dd</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Menampilkan siapa yang sedang masuk, menghubungkan sesi ke akun Google kamu, dan mengelola jumlah pengguna layanan.</span><span>&lt;/<span class="end-tag">dd</span>&gt;</span><span>
+</span></span><span id="line150"><span>            </span><span>&lt;/<span class="end-tag">div</span>&gt;</span><span>
+</span></span><span id="line151"><span>            </span><span>&lt;<span class="start-tag">div</span>&gt;</span><span>
+</span></span><span id="line152"><span>              </span><span>&lt;<span class="start-tag">dt</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-body font-medium</a>"&gt;</span><span>Izin Google Drive terbatas (drive.file)</span><span>&lt;/<span class="end-tag">dt</span>&gt;</span><span>
+</span></span><span id="line153"><span>              </span><span>&lt;<span class="start-tag">dd</span> <span class="attribute-name">class</span>="<a class="attribute-value">text-caption text-subtitle dark:text-subtitle-dark</a>"&gt;</span><span>Membuat dan mengelola satu spreadsheet tempat catatan keuanganmu disimpan. Izin ini hanya berlaku untuk file yang dibuat aplikasi ini sendiri — file lain di Google Drive kamu tidak bisa dilihat, dibuka, maupun dihapus.</span><span>&lt;/<span class="end-tag">dd</span>&gt;</span><span>
+</span></span><span id="line154"><span>            </span><span>&lt;/<span class="end-tag">div</span>&gt;</span><span>
+</span></span><span id="line155"><span>          </span><span>&lt;/<span class="end-tag">dl</span>&gt;</span><span>
+</span></span><span id="line156"><span>          </span><span>&lt;<span class="start-tag">p</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-3 rounded-card border border-hairline bg-surface p-3.5 text-caption text-subtitle dark:border-hairline-dark dark:bg-surface-dark dark:text-subtitle-dark</a>"&gt;</span><span>Hartaku tidak menyimpan isi catatan keuanganmu di server mana pun. Profil dasar Google, waktu aktivitas, dan waktu terakhir menambahkan transaksi disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.</span><span>&lt;/<span class="end-tag">p</span>&gt;</span><span>
+</span></span><span id="line157"><span>        </span><span>&lt;/<span class="end-tag">section</span>&gt;</span><span>
+</span></span><span id="line158"><span>
+</span></span><span id="line159"><span>        </span><span>&lt;<span class="start-tag">footer</span> <span class="attribute-name">class</span>="<a class="attribute-value">mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-hairline pt-4 text-caption dark:border-hairline-dark</a>"&gt;</span><span>
+</span></span><span id="line160"><span>        </span><span>&lt;<span class="start-tag">a</span> <span class="attribute-name">class</span>="<a class="attribute-value">font-medium text-brand-500</a>" <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/privacy">/privacy</a>"&gt;</span><span>Kebijakan Privasi</span><span>&lt;/<span class="end-tag">a</span>&gt;</span><span>
+</span></span><span id="line161"><span>        </span><span>&lt;<span class="start-tag">a</span> <span class="attribute-name">class</span>="<a class="attribute-value">font-medium text-brand-500</a>" <span class="attribute-name">href</span>="<a class="attribute-value" href="view-source:https://hartaku.web.id/terms">/terms</a>"&gt;</span><span>Syarat <span class="entity"><span>&amp;</span>amp;</span> Ketentuan</span><span>&lt;/<span class="end-tag">a</span>&gt;</span><span>
+</span></span><span id="line162"><span>        </span><span>&lt;/<span class="end-tag">footer</span>&gt;</span><span>
+</span></span><span id="line163"><span>      </span><span>&lt;/<span class="end-tag">main</span>&gt;</span><span></span><span>&lt;/<span class="end-tag">div</span>&gt;</span><span>
+</span></span><span id="line164"><span>  </span><span>&lt;/<span class="end-tag">body</span>&gt;</span><span>
+</span></span><span id="line165"><span></span><span>&lt;/<span class="end-tag">html</span>&gt;</span><span>
+</span></span><span id="line166"><span></span></span></body></html>

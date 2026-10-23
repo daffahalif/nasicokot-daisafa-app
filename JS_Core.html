@@ -1,0 +1,211 @@
+<script>
+  /* ---------- App State ---------- */
+  const app = {
+    state: {
+      page: 'beranda',
+      today: '',
+      tomorrow: '',
+      settings: {},
+      menu: [],
+      customers: [],
+      orders: [],
+      expenses: [],
+      loading: false
+    },
+    pendingActions: new Set(),
+    toastQueue: [],
+
+    /* ---------- API Wrapper ---------- */
+    call: function (action, payload = {}) {
+      const actionKey = `${action}_${JSON.stringify(payload)}`;
+      if (this.pendingActions.has(actionKey)) return;
+
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          this.pendingActions.delete(actionKey);
+          reject({ code: 'INTERNAL', message: 'Waktu tunggu habis (20s).' });
+        }, 20000);
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            clearTimeout(timeout);
+            this.pendingActions.delete(actionKey);
+            if (result.ok) resolve(result.data);
+            else reject(result);
+          })
+          .withFailureHandler((err) => {
+            clearTimeout(timeout);
+            this.pendingActions.delete(actionKey);
+            reject(err);
+          })
+          .api({ action, payload });
+      });
+    },
+
+    /* ---------- UI Helpers ---------- */
+    showToast: function (message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    },
+
+    showSheet: function (show) {
+      const sheet = document.getElementById('sheet-lainnya');
+      if (show) {
+        sheet.classList.add('open');
+        document.getElementById('page-title').textContent = 'Lainnya';
+      } else {
+        sheet.classList.remove('open');
+        document.getElementById('page-title').textContent = app.state.page.charAt(0).toUpperCase() + app.state.page.slice(1);
+      }
+    },
+
+    navigate: function (page) {
+      if (page === 'lainnya') {
+        this.showSheet(true);
+        return;
+      }
+      this.state.page = page;
+      this.renderAll();
+      this.showSheet(false);
+    },
+
+    /* ---------- Loading Data ---------- */
+    loadData: async function () {
+      try {
+        const bootstrap = await this.call('bootstrap');
+        app.state.today = bootstrap.today;
+        app.state.tomorrow = bootstrap.tomorrow;
+        app.state.settings = bootstrap.settings;
+        app.state.menu = bootstrap.menu;
+      } catch (err) {
+        this.showToast('Gagal memuat data awal: ' + err.message);
+      }
+    },
+
+    loadComponent: async function () {
+      await this.loadData();
+      await this.loadDashboard();
+      await this.loadOrders();
+      await this.loadCustomers();
+      await this.loadMenu();
+      await this.loadExpenses();
+      await this.loadSettings();
+      this.renderAll();
+
+      // Setup global event listeners
+      this.setupEventListeners();
+
+      const firstInput = document.querySelector('input:not([type=hidden]):not([disabled])');
+      if (firstInput) firstInput.focus();
+    },
+
+    /* ---------- Money Formatter ---------- */
+    money: function (amount) {
+      if (!amount && amount !== 0) return 'Rp 0';
+      const num = Math.max(0, Math.round(Number(amount || 0)));
+      return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    },
+
+    /* ---------- Helper Functions ---------- */
+    isoToDate: function (iso) {
+      if (!iso) return new Date();
+      const match = iso.match(/^(\\d{4})-(\\d{2})-(\\d{2})/);
+      if (match) {
+        return new Date(Date.UTC(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3])));
+      }
+      return new Date(iso);
+    },
+
+    todayIso: function () {
+      return new Date().toISOString().slice(0, 10);
+    },
+
+    addDaysIso: function (iso, days) {
+      const date = this.isoToDate(iso);
+      date.setUTCDate(date.getUTCDate() + days);
+      return date.toISOString().slice(0, 10);
+    },
+
+    nowIso: function () {
+      return new Date().toISOString().slice(0, 20);
+    },
+
+    parseDate: function (str) {
+      if (!str) return '';
+      const match = str.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+      if (match) return str;
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      return '';
+    },
+
+    pad: function (num, len) {
+      return String(num).padStart(len, '0');
+    },
+
+    normalizePhone: function (phone) {
+      if (!phone) return '';
+      let cleaned = phone.replace(/\\D/g, '');
+      if (cleaned.startsWith('0')) cleaned = '62' + cleaned.substring(1);
+      if (!cleaned.startsWith('62')) cleaned = '62' + cleaned;
+      return cleaned;
+    },
+
+    normalizeNameKey: function (name) {
+      if (!name) return '';
+      return name
+        .toString()
+        .normalize('NFC')
+        .replace(/[\\u2060\\uFEFF\\u200B-\\u200D\\uFE0F]/g, '')
+        .replace(/[!"#$%&'()*+,./:;<=>?@[\\\\]^`{|}~]/g, '')
+        .trim()
+        .toLowerCase()
+        .replace(/\\s+/g, ' ');
+    },
+
+    normalizeFlavor: function (s) {
+      if (!s) return null;
+      s = String(s)
+        .normalize('NFC')
+        .replace(/[\\u2060\\uFEFF\\u200B-\\u200D\\uFE0F]/g, '')
+        .replace(/[!"#$%&'()*+,./:;<=>?@[\\\\]^`{|}~]/g, '')
+        .trim()
+        .toLowerCase();
+      s = s.replace(/^\\s*\\d+\\s*[\\.\\)]\\s*/, '');
+      const map = {
+        'kulit krengsengan': 'M01',
+        'kulit': 'M01',
+        'krengsengan': 'M01',
+        'mercon': 'M02',
+        'rica': 'M03',
+        'rica kemangi': 'M03',
+        'kemangi': 'M03',
+        'bumbu rendang': 'M04',
+        'rendang': 'M04',
+        'bumbu bebek': 'M05',
+        'bebek': 'M05'
+      };
+      return map[s] || null;
+    },
+
+    normalizeMethod: function (method) {
+      if (!method) return '';
+      const m = String(method).trim().toLowerCase();
+      if (m.includes('tunai')) return 'Tunai';
+      if (m.includes('qris')) return 'QRIS';
+      if (m.includes('bsi') || m.includes('transfer')) return 'Transfer';
+      return '';
+    },
+
+    methodFromStatus: function (status) {
+      if (!status) return '';
+      const m = String(status).toLowerCase();
+      if (m.includes('bsi') || m.includes('transfer')) return 'Transfer';
+      if (m.includes('qris')) return 'QRIS';
+      if (m.includes('cash')) return 'Tunai';
+      return '';
+    },
+  };
+</script>
