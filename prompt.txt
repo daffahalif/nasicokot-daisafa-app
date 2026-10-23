@@ -1,6 +1,7 @@
-new problem on console:
+problem on console:
 about:blank:1 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
-VM73:11 Uncaught TypeError: app.renderAll is not a function
+VM29:161 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.renderAll (<anonymous>:161:22)
     at appInit (<anonymous>:11:11)
     at HTMLDocument.<anonymous> (<anonymous>:105:7)
     at fu (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349:125)
@@ -8,42 +9,24 @@ VM73:11 Uncaught TypeError: app.renderAll is not a function
     at To (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196:105)
     at c (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270:536)
     at a (519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193:52)
-appInit @ VM73:11
-(anonymous) @ VM73:105
-fu @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349
-(anonymous) @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:59
-To @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196
-c @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270
-a @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193
 472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
 472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
-VM71:89 Uncaught (in promise) TypeError: this.loadDashboard is not a function
-    at Object.loadComponent (<anonymous>:89:18)
-loadComponent @ VM71:89
-await in loadComponent
-appInit @ VM73:5
-(anonymous) @ VM73:105
-fu @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:349
-(anonymous) @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:59
-To @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:196
-c @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:270
-a @ 519722910-mae_html_user_bin_i18n_mae_html_user__id.js:193
-VM71:70 Uncaught TypeError: this.renderAll is not a function
-    at Object.navigate (<anonymous>:70:12)
-    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
-navigate @ VM71:70
-(anonymous) @ VM73:19
-VM71:70 Uncaught TypeError: this.renderAll is not a function
-    at Object.navigate (<anonymous>:70:12)
-    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
-navigate @ VM71:70
-(anonymous) @ VM73:19
-VM71:70 Uncaught TypeError: this.renderAll is not a function
-    at Object.navigate (<anonymous>:70:12)
-    at HTMLButtonElement.<anonymous> (<anonymous>:19:15)
-navigate @ VM71:70
-(anonymous) @ VM73:19
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from IDLE to BUSY
+472645793-warden_bin_i18n_warden__en_gb.js:177 Net state changed from BUSY to IDLE
+VM29:161 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.renderAll (<anonymous>:161:22)
+    at Object.loadComponent (<anonymous>:150:12)
+renderAll @ VM29:161
+loadComponent @ VM29:150
 
 Here are the updates:
-- the ui not loaded
+- the ui still not loaded
 - all navigation not working except "lainnya"

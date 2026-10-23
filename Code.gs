@@ -56,20 +56,11 @@ var SETTINGS_SEED = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Include helper (for modular HtmlService files)                     */
-/* ------------------------------------------------------------------ */
-
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
-/* ------------------------------------------------------------------ */
 /* Entry points                                                        */
 /* ------------------------------------------------------------------ */
 
 function doGet(e) {
-  return HtmlService.createTemplateFromFile('index')
-    .evaluate()
+  return HtmlService.createHtmlOutputFromFile('index')
     .setTitle(APP_TITLE)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
