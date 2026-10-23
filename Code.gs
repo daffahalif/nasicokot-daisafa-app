@@ -771,52 +771,69 @@ function getOrder_(p) {
 function createOrder_(p) {
   var date = parseDate_(p.delivery_date);
   if (!date) throw appError_('VALIDATION', 'Tanggal antar tidak valid.');
-  var qty = parseInt(p.qty, 10);
-  if (!qty || qty < 1) throw appError_('VALIDATION', 'Jumlah porsi minimal 1.');
 
   var menuMap = getMenuMap_();
-  var m1 = menuMap[p.menu1_id];
-  if (!m1) throw appError_('VALIDATION', 'Menu utama tidak valid.');
-  var m2 = p.menu2_id ? menuMap[p.menu2_id] : null;
-  if (p.menu2_id && !m2) throw appError_('VALIDATION', 'Menu campuran tidak valid.');
-  var pair = sortMenuIds_(m1.menu_id, m2 ? m2.menu_id : '', menuMap);
+
+  // Mendukung banyak baris: p.items = [{menu1_id, menu2_id, qty}, ...]
+  // Tanpa items, dipakai bentuk lama (menu1_id, menu2_id, qty).
+  var rawItems = Array.isArray(p.items) && p.items.length
+    ? p.items
+    : [{ menu1_id: p.menu1_id, menu2_id: p.menu2_id, qty: p.qty }];
+  if (rawItems.length > 30) throw appError_('VALIDATION', 'Maksimal 30 baris menu per pesanan.');
+
+  var items = rawItems.map(function (it, idx) {
+    var tag = rawItems.length > 1 ? ' (baris ' + (idx + 1) + ')' : '';
+    var qty = parseInt(it.qty, 10);
+    if (!qty || qty < 1) throw appError_('VALIDATION', 'Jumlah porsi minimal 1' + tag + '.');
+    var m1 = menuMap[it.menu1_id];
+    if (!m1) throw appError_('VALIDATION', 'Rasa 1 tidak valid' + tag + '.');
+    var m2 = it.menu2_id ? menuMap[it.menu2_id] : null;
+    if (it.menu2_id && !m2) throw appError_('VALIDATION', 'Rasa 2 tidak valid' + tag + '.');
+    if (m2 && m2.menu_id === m1.menu_id) throw appError_('VALIDATION', 'Rasa 2 harus berbeda dari rasa 1' + tag + '.');
+    return {
+      qty: qty,
+      m1: m1,
+      pair: sortMenuIds_(m1.menu_id, m2 ? m2.menu_id : '', menuMap)
+    };
+  });
 
   var status = p.payment_status === 'Lunas' ? 'Lunas' : 'Belum Lunas';
   var method = normalizeMethod_(p.payment_method);
   if (status === 'Lunas' && !method) throw appError_('VALIDATION', 'Metode bayar wajib diisi untuk pesanan lunas.');
   if (status !== 'Lunas') method = '';
 
-  var unitPrice = Number(m1.price) || 0;
-  var unitCost = Number(m1.cost) || 0;
-
   return withLock_(function () {
     var customer = resolveCustomerLocked_(p);
-    var invoice = nextInvoiceNoLocked_(date);
     var now = nowIso_();
-    var obj = {
-      invoice_no: invoice,
-      delivery_date: date,
-      customer_id: customer.customer_id,
-      customer_name: customer.name,
-      menu1_id: pair[0],
-      menu2_id: pair[1],
-      qty: qty,
-      unit_price: unitPrice,
-      unit_cost: unitCost,
-      line_total: qty * unitPrice,
-      margin: qty * (unitPrice - unitCost),
-      payment_status: status,
-      payment_method: method,
-      order_status: 'Baru',
-      notes: String(p.notes || ''),
-      paid_at: status === 'Lunas' ? now : '',
-      created_at: now,
-      updated_at: now
-    };
-    appendRows_('Orders', [objectToRow_('Orders', obj)]);
     var cmap = {};
     cmap[customer.customer_id] = customer;
-    return { order: serializeOrder_(obj, cmap, menuMap) };
+    var objs = items.map(function (it) {
+      var unitPrice = Number(it.m1.price) || 0;
+      var unitCost = Number(it.m1.cost) || 0;
+      return {
+        invoice_no: nextInvoiceNoLocked_(date),
+        delivery_date: date,
+        customer_id: customer.customer_id,
+        customer_name: customer.name,
+        menu1_id: it.pair[0],
+        menu2_id: it.pair[1],
+        qty: it.qty,
+        unit_price: unitPrice,
+        unit_cost: unitCost,
+        line_total: it.qty * unitPrice,
+        margin: it.qty * (unitPrice - unitCost),
+        payment_status: status,
+        payment_method: method,
+        order_status: 'Baru',
+        notes: String(p.notes || ''),
+        paid_at: status === 'Lunas' ? now : '',
+        created_at: now,
+        updated_at: now
+      };
+    });
+    appendRows_('Orders', objs.map(function (o) { return objectToRow_('Orders', o); }));
+    var serialized = objs.map(function (o) { return serializeOrder_(o, cmap, menuMap); });
+    return { order: serialized[0], orders: serialized };
   });
 }
 

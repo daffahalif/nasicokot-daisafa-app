@@ -3418,6 +3418,70 @@
       }
     }
 
+    .order-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 10px
+    }
+
+    .order-line {
+      position: relative;
+      padding: 10px;
+      border-radius: 14px;
+      background: var(--paper-2);
+      border: 1px solid var(--line)
+    }
+
+    .order-line-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 68px;
+      gap: 8px
+    }
+
+    .order-line .field>label {
+      font-size: 10.5px
+    }
+
+    .order-line .field>label .opt {
+      font-weight: 500;
+      color: var(--muted)
+    }
+
+    .order-line .select,
+    .order-line .input {
+      padding-left: 10px
+    }
+
+    .order-line .select {
+      padding-right: 26px;
+      background-position: calc(100% - 14px) 22px, calc(100% - 9px) 22px
+    }
+
+    .order-line .qty-input {
+      padding-right: 6px;
+      text-align: center;
+      font-weight: 750
+    }
+
+    .line-remove {
+      position: absolute;
+      top: -9px;
+      right: -7px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--paper);
+      border: 1px solid var(--line-strong);
+      color: var(--danger)
+    }
+
+    .line-remove .ic {
+      width: 14px;
+      height: 14px
+    }
+
     .check-row {
       display: flex;
       align-items: flex-start;
@@ -5093,6 +5157,26 @@
       }
       return null;
     }
+    function flavorOptionsHTML(selectedId, blankLabel) {
+      var selected = String(selectedId || '');
+      return '<option value="">' + esc(blankLabel) + '</option>' + state.menu.filter(function (item) {
+        return isTrue(item.active) || String(item.menu_id) === selected;
+      }).map(function (item) {
+        var label = String(item.short_name || item.name || item.menu_id);
+        if (!isTrue(item.active)) label += ' (nonaktif)';
+        return '<option value="' + esc(item.menu_id) + '"' + (String(item.menu_id) === selected ? ' selected' : '') + '>' + esc(label) + '</option>';
+      }).join('');
+    }
+    function orderLineHTML(menu1, menu2, qty, removable) {
+      return '<div class="order-line" data-line>' +
+        '<div class="order-line-grid">' +
+        '<div class="field"><label>Rasa 1</label><select class="select" data-m1 aria-label="Rasa 1">' + flavorOptionsHTML(menu1, 'Pilih') + '</select></div>' +
+        '<div class="field"><label>Rasa 2 <span class="opt">(ops.)</span></label><select class="select" data-m2 aria-label="Rasa 2 (opsional)">' + flavorOptionsHTML(menu2, '—') + '</select></div>' +
+        '<div class="field"><label>Qty</label><input class="input qty-input" type="number" data-qty min="1" step="1" inputmode="numeric" value="' + esc(clampQty(qty)) + '" aria-label="Jumlah porsi"></div>' +
+        '</div>' +
+        '<button class="line-remove" type="button" data-remove-line aria-label="Hapus baris"' + (removable ? '' : ' hidden') + '>' + icon('x') + '</button>' +
+        '</div>';
+    }
     function orderFormHTML(order, data, options) {
       var customer = initialOrderCustomer(data, order);
       var date = order.delivery_date || (options && options.date) || state.orders.date || state.today;
@@ -5129,17 +5213,12 @@
         '</div>' +
         '</div>' +
         '</div>' +
-        '<div class="form-grid">' +
-        '<div class="field"><label for="orderMenu1">Menu 1</label><select class="select" id="orderMenu1" name="menu1_id"><option value="">Pilih menu</option>' + menuOptionsHTML(menu1) + '</select></div>' +
-        '<div class="field"><label for="orderMenu2">Menu 2 (opsional)</label><select class="select" id="orderMenu2" name="menu2_id"><option value="">Tanpa menu 2</option>' + menuOptionsHTML(menu2) + '</select></div>' +
-        '</div>' +
         '<div class="field">' +
-        '<span class="field-label">Jumlah porsi</span>' +
-        '<div class="stepper">' +
-        '<button type="button" data-step="-1" aria-label="Kurangi porsi">' + icon('minus') + '</button>' +
-        '<input type="number" id="orderQty" name="qty" min="1" step="1" inputmode="numeric" value="' + esc(qty) + '" aria-label="Jumlah porsi">' +
-        '<button type="button" data-step="1" aria-label="Tambah porsi">' + icon('plus') + '</button>' +
-        '</div>' +
+        '<span class="field-label">Menu pesanan</span>' +
+        '<div class="order-lines" id="orderLines">' + orderLineHTML(menu1, menu2, qty, false) + '</div>' +
+        (order.invoice_no ? '' :
+          '<div><button class="link-btn" type="button" id="addLineBtn">' + icon('plus') + 'Tambah menu lain</button></div>' +
+          '<p class="field-hint">Satu baris = satu rasa atau campuran 2 rasa. Tiap baris dibuat sebagai nota sendiri.</p>') +
         '</div>' +
         '<div class="field">' +
         '<span class="field-label">Status pembayaran</span>' +
@@ -5265,12 +5344,32 @@
         resultsBox.hidden = true;
         resultsBox.innerHTML = '';
       }
+      var linesBox = form.querySelector('#orderLines');
+      function readLines() {
+        return $$('[data-line]', linesBox).map(function (row) {
+          return {
+            row: row,
+            menu1_id: row.querySelector('[data-m1]').value,
+            menu2_id: row.querySelector('[data-m2]').value,
+            qty: clampQty(row.querySelector('[data-qty]').value)
+          };
+        });
+      }
+      function syncRemoveButtons() {
+        var rows = $$('[data-line]', linesBox);
+        rows.forEach(function (row) {
+          row.querySelector('[data-remove-line]').hidden = rows.length < 2;
+        });
+      }
       function updateEstimate() {
-        var menuItem = menuById(form.querySelector('#orderMenu1').value);
-        var price = menuItem ? num(menuItem.price) : num(setting('default_price', 7000));
-        var qty = clampQty(form.querySelector('#orderQty').value);
+        var total = 0;
+        readLines().forEach(function (line) {
+          var menuItem = menuById(line.menu1_id);
+          var price = menuItem ? num(menuItem.price) : num(setting('default_price', 7000));
+          total += price * line.qty;
+        });
         var output = form.querySelector('#orderEstimate');
-        if (output) output.textContent = rp(price * qty);
+        if (output) output.textContent = rp(total);
       }
       function markSegment(segment, value) {
         $$('button[data-value]', segment).forEach(function (button) {
@@ -5358,29 +5457,43 @@
         markSegment(methodSegment, paymentMethod);
       });
 
-      form.querySelector('#orderMenu1').addEventListener('change', function () {
-        var menu1 = form.querySelector('#orderMenu1').value;
-        var menu2 = form.querySelector('#orderMenu2');
-        if (menu2.value && menu2.value === menu1) menu2.value = '';
+      linesBox.addEventListener('change', function (event) {
+        var row = event.target.closest('[data-line]');
+        if (!row) return;
+        var m1 = row.querySelector('[data-m1]');
+        var m2 = row.querySelector('[data-m2]');
+        if (m2.value && m2.value === m1.value) m2.value = '';
         updateEstimate();
       });
-      form.querySelector('#orderMenu2').addEventListener('change', updateEstimate);
-      form.querySelector('#orderQty').addEventListener('input', updateEstimate);
-      $$('[data-step]', form).forEach(function (button) {
-        button.addEventListener('click', function () {
-          var input = form.querySelector('#orderQty');
-          var next = clampQty(num(input.value) + Number(button.dataset.step));
-          input.value = String(next);
-          updateEstimate();
-        });
+      linesBox.addEventListener('input', updateEstimate);
+      linesBox.addEventListener('click', function (event) {
+        var remove = event.target.closest('[data-remove-line]');
+        if (!remove) return;
+        var row = remove.closest('[data-line]');
+        if (row && $$('[data-line]', linesBox).length > 1) row.remove();
+        syncRemoveButtons();
+        updateEstimate();
       });
+      var addLineBtn = form.querySelector('#addLineBtn');
+      if (addLineBtn) {
+        addLineBtn.addEventListener('click', function () {
+          linesBox.insertAdjacentHTML('beforeend', orderLineHTML('', '', 1, true));
+          syncRemoveButtons();
+          updateEstimate();
+          var rows = $$('[data-line]', linesBox);
+          var last = rows[rows.length - 1];
+          if (last) {
+            try { last.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (err) { }
+            last.querySelector('[data-m1]').focus();
+          }
+        });
+      }
+      syncRemoveButtons();
 
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         var deliveryDate = form.querySelector('#orderDeliveryDate').value;
-        var menu1 = form.querySelector('#orderMenu1').value;
-        var menu2 = form.querySelector('#orderMenu2').value;
-        var qty = clampQty(form.querySelector('#orderQty').value);
+        var lines = readLines();
         var notes = form.querySelector('#orderNotes').value.trim();
         if (!deliveryDate) {
           toast('Tanggal kirim wajib diisi.', 'error');
@@ -5392,15 +5505,19 @@
           searchInput.focus();
           return;
         }
-        if (!menu1) {
-          toast('Menu 1 wajib dipilih.', 'error');
-          form.querySelector('#orderMenu1').focus();
-          return;
-        }
-        if (menu2 && menu2 === menu1) {
-          toast('Menu 2 harus berbeda dari menu 1.', 'error');
-          form.querySelector('#orderMenu2').focus();
-          return;
+        for (var li = 0; li < lines.length; li += 1) {
+          var ln = lines[li];
+          var label = lines.length > 1 ? ' (baris ' + (li + 1) + ')' : '';
+          if (!ln.menu1_id) {
+            toast('Rasa 1 wajib dipilih' + label + '.', 'error');
+            ln.row.querySelector('[data-m1]').focus();
+            return;
+          }
+          if (ln.menu2_id && ln.menu2_id === ln.menu1_id) {
+            toast('Rasa 2 harus berbeda dari rasa 1' + label + '.', 'error');
+            ln.row.querySelector('[data-m2]').focus();
+            return;
+          }
         }
         if (paymentStatus === 'Lunas' && PAY_METHODS.indexOf(paymentMethod) < 0) {
           toast('Pilih metode pembayaran.', 'error');
@@ -5410,13 +5527,18 @@
           delivery_date: deliveryDate,
           customer_id: selectedCustomer.customer_id || '',
           customer_name: selectedCustomer.name || selectedCustomer.customer_name || '',
-          menu1_id: menu1,
-          menu2_id: menu2 || '',
-          qty: qty,
+          menu1_id: lines[0].menu1_id,
+          menu2_id: lines[0].menu2_id || '',
+          qty: lines[0].qty,
           payment_status: paymentStatus,
           payment_method: paymentStatus === 'Lunas' ? paymentMethod : '',
           notes: notes
         };
+        if (!editingOrder) {
+          payload.items = lines.map(function (l) {
+            return { menu1_id: l.menu1_id, menu2_id: l.menu2_id || '', qty: l.qty };
+          });
+        }
         if (selectedCustomer.whatsapp) payload.whatsapp = selectedCustomer.whatsapp;
         if (editingOrder) {
           payload.invoice_no = editingOrder.invoice_no;
@@ -5427,7 +5549,8 @@
           var response = editingOrder ? await call('updateOrder', payload) : await call('createOrder', payload);
           var savedOrder = response.order || {};
           modal.close();
-          toast(editingOrder ? 'Pesanan diperbarui.' : 'Pesanan baru dibuat.', 'success');
+          var madeCount = Array.isArray(response.orders) ? response.orders.length : 1;
+          toast(editingOrder ? 'Pesanan diperbarui.' : (madeCount > 1 ? madeCount + ' pesanan baru dibuat.' : 'Pesanan baru dibuat.'), 'success');
           state.orders.date = savedOrder.delivery_date || deliveryDate;
           state.orders.board = null;
           state.orders.error = null;
