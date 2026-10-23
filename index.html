@@ -3418,6 +3418,32 @@
       }
     }
 
+    .order-items {
+      list-style: none;
+      margin: 8px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px
+    }
+
+    .order-items li {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      padding: 6px 9px;
+      border-radius: 9px;
+      background: var(--paper-2);
+      font-size: 12.5px;
+      color: var(--navy)
+    }
+
+    .order-items li b {
+      min-width: 28px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums
+    }
+
     .order-lines {
       display: flex;
       flex-direction: column;
@@ -4151,13 +4177,38 @@
       if (!item) return menuId ? String(menuId) : '—';
       return String(item.name || item.short_name || menuId);
     }
+    function orderItems(order) {
+      if (order && Array.isArray(order.items) && order.items.length) return order.items;
+      if (!order || !order.menu1_id) return [];
+      return [{
+        menu1_id: order.menu1_id, menu2_id: order.menu2_id || '', menu_label: order.menu_label || '',
+        qty: order.qty, unit_price: order.unit_price, line_total: order.line_total
+      }];
+    }
+    function itemLabel(item) {
+      if (item && item.menu_label) return String(item.menu_label);
+      if (!item || !item.menu1_id) return 'Menu belum dipilih';
+      if (item.menu2_id) return menuLabel(item.menu1_id) + '-' + menuLabel(item.menu2_id);
+      return menuLabel(item.menu1_id);
+    }
     function orderLabel(order) {
-      if (!order || !order.menu1_id) return 'Menu belum dipilih';
-      if (order.menu2_id) return menuLabel(order.menu1_id) + '-' + menuLabel(order.menu2_id);
-      return menuLabel(order.menu1_id);
+      var items = orderItems(order);
+      if (!items.length) return 'Menu belum dipilih';
+      return items.map(itemLabel).join(' + ');
     }
     function isMix(order) {
-      return Boolean(order && order.menu2_id);
+      return orderItems(order).some(function (item) { return Boolean(item.menu2_id); });
+    }
+    function orderItemsHTML(order) {
+      var items = orderItems(order);
+      var total = num(order.qty) || items.reduce(function (sum, item) { return sum + num(item.qty); }, 0);
+      if (items.length <= 1) {
+        return '<div class="order-meta"><strong>' + nf(total) + ' porsi</strong><span>' + esc(orderLabel(order)) + '</span></div>';
+      }
+      return '<ul class="order-items">' + items.map(function (item) {
+        return '<li><b>' + nf(item.qty) + '×</b><span>' + esc(itemLabel(item)) + '</span></li>';
+      }).join('') + '</ul>' +
+        '<div class="order-meta"><strong>' + nf(total) + ' porsi</strong><span>' + items.length + ' menu dalam 1 nota</span></div>';
     }
     function cashValues(dashboard) {
       var cash = dashboard && dashboard.cash ? dashboard.cash : {};
@@ -5067,7 +5118,7 @@
           '<div><p class="order-invoice">' + esc(order.invoice_no || '—') + '</p><p class="order-customer">' + esc(order.customer_name || 'Pelanggan') + '</p></div>' +
           '<span class="order-amount">' + rp(amount) + '</span>' +
           '</div>' +
-          '<div class="order-meta"><strong>' + nf(qty) + ' porsi</strong><span>' + esc(orderLabel(order)) + '</span></div>' +
+          orderItemsHTML(order) +
           '<div class="order-badges">' + badges + '</div>' +
           (notes ? '<p class="order-note">' + esc(notes) + '</p>' : '') +
           '<div class="order-actions">' +
@@ -5188,6 +5239,8 @@
       var notes = order.notes || '';
       var menu1Item = menuById(menu1);
       var price = menu1Item ? num(menu1Item.price) : num(setting('default_price', 7000));
+      var initItems = orderItems(order);
+      if (!initItems.length) initItems = [{ menu1_id: '', menu2_id: '', qty: 1 }];
       return '<form id="orderForm" class="form" novalidate>' +
         '<div class="field">' +
         '<label for="orderDeliveryDate">Tanggal kirim</label>' +
@@ -5215,10 +5268,11 @@
         '</div>' +
         '<div class="field">' +
         '<span class="field-label">Menu pesanan</span>' +
-        '<div class="order-lines" id="orderLines">' + orderLineHTML(menu1, menu2, qty, false) + '</div>' +
-        (order.invoice_no ? '' :
-          '<div><button class="link-btn" type="button" id="addLineBtn">' + icon('plus') + 'Tambah menu lain</button></div>' +
-          '<p class="field-hint">Satu baris = satu rasa atau campuran 2 rasa. Tiap baris dibuat sebagai nota sendiri.</p>') +
+        '<div class="order-lines" id="orderLines">' + initItems.map(function (it) {
+          return orderLineHTML(it.menu1_id, it.menu2_id, it.qty, initItems.length > 1);
+        }).join('') + '</div>' +
+        '<div><button class="link-btn" type="button" id="addLineBtn">' + icon('plus') + 'Tambah menu lain</button></div>' +
+        '<p class="field-hint">Satu baris = satu rasa atau campuran 2 rasa. Semua baris masuk dalam satu nota.</p>' +
         '</div>' +
         '<div class="field">' +
         '<span class="field-label">Status pembayaran</span>' +
@@ -5534,11 +5588,9 @@
           payment_method: paymentStatus === 'Lunas' ? paymentMethod : '',
           notes: notes
         };
-        if (!editingOrder) {
-          payload.items = lines.map(function (l) {
-            return { menu1_id: l.menu1_id, menu2_id: l.menu2_id || '', qty: l.qty };
-          });
-        }
+        payload.items = lines.map(function (l) {
+          return { menu1_id: l.menu1_id, menu2_id: l.menu2_id || '', qty: l.qty };
+        });
         if (selectedCustomer.whatsapp) payload.whatsapp = selectedCustomer.whatsapp;
         if (editingOrder) {
           payload.invoice_no = editingOrder.invoice_no;
@@ -5549,8 +5601,7 @@
           var response = editingOrder ? await call('updateOrder', payload) : await call('createOrder', payload);
           var savedOrder = response.order || {};
           modal.close();
-          var madeCount = Array.isArray(response.orders) ? response.orders.length : 1;
-          toast(editingOrder ? 'Pesanan diperbarui.' : (madeCount > 1 ? madeCount + ' pesanan baru dibuat.' : 'Pesanan baru dibuat.'), 'success');
+          toast(editingOrder ? 'Pesanan diperbarui.' : 'Pesanan baru dibuat.', 'success');
           state.orders.date = savedOrder.delivery_date || deliveryDate;
           state.orders.board = null;
           state.orders.error = null;
@@ -6011,6 +6062,16 @@
         if (l.length + r.length >= width) return l + ' ' + r;
         return l + new Array(width - l.length - r.length + 1).join(' ') + r;
       }
+      var receiptItems = orderItems(order).map(function (it) {
+        var unit = num(it.unit_price);
+        if (!unit) {
+          var pm = menuById(it.menu1_id);
+          unit = pm ? num(pm.price) : num(setting('default_price', 0));
+        }
+        var qtyItem = num(it.qty);
+        return { label: itemLabel(it), qty: qtyItem, unitPrice: unit, subtotal: num(it.line_total) || qtyItem * unit };
+      });
+      if (!receiptItems.length) receiptItems = [{ label: label, qty: qty, unitPrice: unitPrice, subtotal: qty * unitPrice }];
       var lines = [];
       lines.push(business.toUpperCase());
       lines.push('NOTA PESANAN');
@@ -6020,8 +6081,10 @@
       lines.push('Pelanggan : ' + customerName);
       if (orderStatus === 'Batal') lines.push('STATUS    : BATAL');
       lines.push(new Array(width + 1).join('-'));
-      lines.push(label);
-      lines.push(padLine('  ' + qty + ' x ' + rp(unitPrice), rp(total)));
+      receiptItems.forEach(function (it) {
+        lines.push(it.label);
+        lines.push(padLine('  ' + it.qty + ' x ' + rp(it.unitPrice), rp(it.subtotal)));
+      });
       lines.push(new Array(width + 1).join('-'));
       lines.push(padLine('TOTAL', rp(total)));
       lines.push(padLine('PEMBAYARAN', paymentStatus + (paymentMethod ? ' / ' + paymentMethod : '')));
@@ -6044,6 +6107,7 @@
         dateLabel: fmtDateLong(date),
         customerName: customerName,
         customerWhatsapp: customer.whatsapp || '',
+        items: receiptItems,
         label: label,
         qty: qty,
         unitPrice: unitPrice,
@@ -6073,8 +6137,10 @@
         '<div class="receipt-row"><span>Tanggal</span><span>' + esc(model.dateLabel) + '</span></div>' +
         '<div class="receipt-row"><span>Pelanggan</span><span>' + esc(model.customerName) + '</span></div>' +
         '<div class="receipt-sep"></div>' +
-        '<div class="receipt-label">' + esc(model.label) + '</div>' +
-        '<div class="receipt-line"><span>' + nf(model.qty) + ' x ' + rp(model.unitPrice) + '</span><span>' + rp(model.total) + '</span></div>' +
+        model.items.map(function (it) {
+          return '<div class="receipt-label">' + esc(it.label) + '</div>' +
+            '<div class="receipt-line"><span>' + nf(it.qty) + ' x ' + rp(it.unitPrice) + '</span><span>' + rp(it.subtotal) + '</span></div>';
+        }).join('') +
         '<div class="receipt-sep"></div>' +
         '<div class="receipt-total"><span>TOTAL</span><strong>' + rp(model.total) + '</strong></div>' +
         '<div class="receipt-sep"></div>' +

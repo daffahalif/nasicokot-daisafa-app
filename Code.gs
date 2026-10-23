@@ -254,6 +254,84 @@ function readTable_(name) {
   return out;
 }
 
+function readTableRows_(name) {
+  var sh = sheet_(name);
+  var headers = SCHEMA[name];
+  var last = lastDataRow_(sh, 1);
+  if (last < 2) return [];
+  var values = sh.getRange(2, 1, last - 1, headers.length).getValues();
+  var out = [];
+  values.forEach(function (row, idx) {
+    var any = false;
+    for (var i = 0; i < row.length; i++) {
+      if (String(row[i] || '').trim() !== '') { any = true; break; }
+    }
+    if (!any) return;
+    var obj = {};
+    headers.forEach(function (h, i) { obj[h] = row[i]; });
+    obj._row = idx + 2;
+    out.push(obj);
+  });
+  return out;
+}
+
+function groupByInvoice_(rows) {
+  var map = {};
+  var list = [];
+  rows.forEach(function (o) {
+    var k = String(o.invoice_no);
+    if (!map[k]) { map[k] = []; list.push(map[k]); }
+    map[k].push(o);
+  });
+  return list;
+}
+
+function countInvoices_(rows) {
+  var seen = {};
+  var n = 0;
+  rows.forEach(function (o) {
+    var k = String(o.invoice_no);
+    if (!seen[k]) { seen[k] = true; n += 1; }
+  });
+  return n;
+}
+
+function buildOrderItems_(rawItems, menuMap) {
+  if (rawItems.length > 30) throw appError_('VALIDATION', 'Maksimal 30 baris menu per pesanan.');
+  return rawItems.map(function (it, idx) {
+    var tag = rawItems.length > 1 ? ' (baris ' + (idx + 1) + ')' : '';
+    var qty = parseInt(it.qty, 10);
+    if (!qty || qty < 1) throw appError_('VALIDATION', 'Jumlah porsi minimal 1' + tag + '.');
+    var m1 = menuMap[it.menu1_id];
+    if (!m1) throw appError_('VALIDATION', 'Rasa 1 tidak valid' + tag + '.');
+    var m2 = it.menu2_id ? menuMap[it.menu2_id] : null;
+    if (it.menu2_id && !m2) throw appError_('VALIDATION', 'Rasa 2 tidak valid' + tag + '.');
+    if (m2 && m2.menu_id === m1.menu_id) throw appError_('VALIDATION', 'Rasa 2 harus berbeda dari rasa 1' + tag + '.');
+    return {
+      qty: qty,
+      m1: m1,
+      pair: sortMenuIds_(m1.menu_id, m2 ? m2.menu_id : '', menuMap)
+    };
+  });
+}
+
+function itemsToRowObjs_(items, base) {
+  return items.map(function (it) {
+    var unitPrice = Number(it.m1.price) || 0;
+    var unitCost = Number(it.m1.cost) || 0;
+    var o = {};
+    Object.keys(base).forEach(function (k) { o[k] = base[k]; });
+    o.menu1_id = it.pair[0];
+    o.menu2_id = it.pair[1];
+    o.qty = it.qty;
+    o.unit_price = unitPrice;
+    o.unit_cost = unitCost;
+    o.line_total = it.qty * unitPrice;
+    o.margin = it.qty * (unitPrice - unitCost);
+    return o;
+  });
+}
+
 function objectToRow_(name, obj) {
   return SCHEMA[name].map(function (h) {
     var v = obj[h];
@@ -613,7 +691,7 @@ function dashboard_() {
   var customerMap = getCustomerMap_();
 
   function agg(list) {
-    var out = { portions: 0, omzet: 0, margin: 0, orders: list.length };
+    var out = { portions: 0, omzet: 0, margin: 0, orders: countInvoices_(list) };
     list.forEach(function (o) {
       out.portions += Number(o.qty) || 0;
       out.omzet += Number(o.line_total) || 0;
@@ -625,13 +703,16 @@ function dashboard_() {
   var unpaid = orders.filter(function (o) { return o.payment_status === 'Belum Lunas'; });
   var unpaidAmount = 0;
   unpaid.forEach(function (o) { unpaidAmount += Number(o.line_total) || 0; });
-  var unpaidList = unpaid.map(function (o) {
+  var unpaidList = groupByInvoice_(unpaid).map(function (g) {
+    var o = g[0];
     var c = customerMap[o.customer_id] || {};
+    var amount = 0;
+    g.forEach(function (r) { amount += Number(r.line_total) || 0; });
     return {
       invoice_no: o.invoice_no,
       customer_name: o.customer_name,
       whatsapp: c.whatsapp || '',
-      amount: Number(o.line_total) || 0,
+      amount: amount,
       delivery_date: o.delivery_date
     };
   }).sort(function (a, b) { return String(a.delivery_date).localeCompare(String(b.delivery_date)); });
@@ -659,7 +740,7 @@ function dashboard_() {
   return {
     today: todayAgg,
     month: monthAgg,
-    receivables: { count: unpaid.length, amount: unpaidAmount },
+    receivables: { count: unpaidList.length, amount: unpaidAmount },
     cash: cash,
     expenses_month: expensesMonth,
     net_cash_month: cash.total - expensesMonth,
@@ -710,8 +791,11 @@ function orderBoard_(p) {
     summary_text: buildSummary_(date, orders, menuMap),
     groups: mix.concat(single),
     total: total,
-    orders: orders.map(function (o) { return serializeOrder_(o, customerMap, menuMap); })
-      .sort(function (a, b) { return String(a.customer_name).localeCompare(String(b.customer_name)); })
+    orders: groupByInvoice_(orders).map(function (g) { return serializeInvoice_(g, customerMap, menuMap); })
+      .sort(function (a, b) {
+        var c = String(a.customer_name).localeCompare(String(b.customer_name));
+        return c !== 0 ? c : String(a.invoice_no).localeCompare(String(b.invoice_no));
+      })
   };
 }
 
@@ -740,26 +824,23 @@ function listOrders_(p) {
     return String(b.invoice_no).localeCompare(String(a.invoice_no));
   });
 
-  return { orders: orders.map(function (o) { return serializeOrder_(o, customerMap, menuMap); }) };
+  return { orders: groupByInvoice_(orders).map(function (g) { return serializeInvoice_(g, customerMap, menuMap); }) };
 }
 
 function getOrder_(p) {
   var inv = String(p.invoice_no || '').trim();
   if (!inv) throw appError_('VALIDATION', 'Nomor nota wajib diisi.');
-  var order = null;
-  readTable_('Orders').some(function (o) {
-    if (String(o.invoice_no) === inv) { order = o; return true; }
-    return false;
-  });
-  if (!order) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
+  var rows = readTable_('Orders').filter(function (o) { return String(o.invoice_no) === inv; });
+  if (!rows.length) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
+  var first = rows[0];
 
   var customerMap = getCustomerMap_();
   var menuMap = getMenuMap_();
   return {
-    order: serializeOrder_(order, customerMap, menuMap),
-    customer: customerMap[order.customer_id] ? serializeCustomer_(customerMap[order.customer_id]) : null,
-    menu1: menuMap[order.menu1_id] || null,
-    menu2: order.menu2_id ? (menuMap[order.menu2_id] || null) : null,
+    order: serializeInvoice_(rows, customerMap, menuMap),
+    customer: customerMap[first.customer_id] ? serializeCustomer_(customerMap[first.customer_id]) : null,
+    menu1: menuMap[first.menu1_id] || null,
+    menu2: first.menu2_id ? (menuMap[first.menu2_id] || null) : null,
     settings: getSettings_()
   };
 }
@@ -773,29 +854,11 @@ function createOrder_(p) {
   if (!date) throw appError_('VALIDATION', 'Tanggal antar tidak valid.');
 
   var menuMap = getMenuMap_();
-
-  // Mendukung banyak baris: p.items = [{menu1_id, menu2_id, qty}, ...]
-  // Tanpa items, dipakai bentuk lama (menu1_id, menu2_id, qty).
+  // Satu nota bisa berisi banyak baris: p.items = [{menu1_id, menu2_id, qty}, ...]
   var rawItems = Array.isArray(p.items) && p.items.length
     ? p.items
     : [{ menu1_id: p.menu1_id, menu2_id: p.menu2_id, qty: p.qty }];
-  if (rawItems.length > 30) throw appError_('VALIDATION', 'Maksimal 30 baris menu per pesanan.');
-
-  var items = rawItems.map(function (it, idx) {
-    var tag = rawItems.length > 1 ? ' (baris ' + (idx + 1) + ')' : '';
-    var qty = parseInt(it.qty, 10);
-    if (!qty || qty < 1) throw appError_('VALIDATION', 'Jumlah porsi minimal 1' + tag + '.');
-    var m1 = menuMap[it.menu1_id];
-    if (!m1) throw appError_('VALIDATION', 'Rasa 1 tidak valid' + tag + '.');
-    var m2 = it.menu2_id ? menuMap[it.menu2_id] : null;
-    if (it.menu2_id && !m2) throw appError_('VALIDATION', 'Rasa 2 tidak valid' + tag + '.');
-    if (m2 && m2.menu_id === m1.menu_id) throw appError_('VALIDATION', 'Rasa 2 harus berbeda dari rasa 1' + tag + '.');
-    return {
-      qty: qty,
-      m1: m1,
-      pair: sortMenuIds_(m1.menu_id, m2 ? m2.menu_id : '', menuMap)
-    };
-  });
+  var items = buildOrderItems_(rawItems, menuMap);
 
   var status = p.payment_status === 'Lunas' ? 'Lunas' : 'Belum Lunas';
   var method = normalizeMethod_(p.payment_method);
@@ -804,36 +867,26 @@ function createOrder_(p) {
 
   return withLock_(function () {
     var customer = resolveCustomerLocked_(p);
+    var invoice = nextInvoiceNoLocked_(date);
     var now = nowIso_();
+    var base = {
+      invoice_no: invoice,
+      delivery_date: date,
+      customer_id: customer.customer_id,
+      customer_name: customer.name,
+      payment_status: status,
+      payment_method: method,
+      order_status: 'Baru',
+      notes: String(p.notes || ''),
+      paid_at: status === 'Lunas' ? now : '',
+      created_at: now,
+      updated_at: now
+    };
+    var objs = itemsToRowObjs_(items, base);
+    appendRows_('Orders', objs.map(function (o) { return objectToRow_('Orders', o); }));
     var cmap = {};
     cmap[customer.customer_id] = customer;
-    var objs = items.map(function (it) {
-      var unitPrice = Number(it.m1.price) || 0;
-      var unitCost = Number(it.m1.cost) || 0;
-      return {
-        invoice_no: nextInvoiceNoLocked_(date),
-        delivery_date: date,
-        customer_id: customer.customer_id,
-        customer_name: customer.name,
-        menu1_id: it.pair[0],
-        menu2_id: it.pair[1],
-        qty: it.qty,
-        unit_price: unitPrice,
-        unit_cost: unitCost,
-        line_total: it.qty * unitPrice,
-        margin: it.qty * (unitPrice - unitCost),
-        payment_status: status,
-        payment_method: method,
-        order_status: 'Baru',
-        notes: String(p.notes || ''),
-        paid_at: status === 'Lunas' ? now : '',
-        created_at: now,
-        updated_at: now
-      };
-    });
-    appendRows_('Orders', objs.map(function (o) { return objectToRow_('Orders', o); }));
-    var serialized = objs.map(function (o) { return serializeOrder_(o, cmap, menuMap); });
-    return { order: serialized[0], orders: serialized };
+    return { order: serializeInvoice_(objs, cmap, menuMap) };
   });
 }
 
@@ -842,28 +895,18 @@ function updateOrder_(p) {
   if (!inv) throw appError_('VALIDATION', 'Nomor nota wajib diisi.');
 
   return withLock_(function () {
-    var rowIndex = findRowIndex_('Orders', 'invoice_no', inv);
-    if (rowIndex < 0) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
-    var existing = null;
-    readTable_('Orders').some(function (o) {
-      if (String(o.invoice_no) === inv) { existing = o; return true; }
-      return false;
-    });
-    if (!existing) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
+    var existingRows = readTableRows_('Orders').filter(function (o) { return String(o.invoice_no) === inv; });
+    if (!existingRows.length) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
+    var existing = existingRows[0];
 
     var menuMap = getMenuMap_();
-    var menu1Id = p.menu1_id || existing.menu1_id;
-    var menu2Id = p.menu2_id === '' ? '' : (p.menu2_id || existing.menu2_id);
-    var m1 = menuMap[menu1Id];
-    if (!m1) throw appError_('VALIDATION', 'Menu utama tidak valid.');
-    var m2 = menu2Id ? menuMap[menu2Id] : null;
-    if (menu2Id && !m2) throw appError_('VALIDATION', 'Menu campuran tidak valid.');
-    var pair = sortMenuIds_(m1.menu_id, m2 ? m2.menu_id : '', menuMap);
+    var rawItems = Array.isArray(p.items) && p.items.length ? p.items : existingRows.map(function (r) {
+      return { menu1_id: r.menu1_id, menu2_id: r.menu2_id, qty: r.qty };
+    });
+    var items = buildOrderItems_(rawItems, menuMap);
 
     var date = p.delivery_date ? parseDate_(p.delivery_date) : existing.delivery_date;
     if (!date) throw appError_('VALIDATION', 'Tanggal antar tidak valid.');
-    var qty = p.qty !== undefined ? parseInt(p.qty, 10) : parseInt(existing.qty, 10);
-    if (!qty || qty < 1) throw appError_('VALIDATION', 'Jumlah porsi minimal 1.');
 
     var status = p.payment_status === 'Lunas' ? 'Lunas' : (p.payment_status === 'Belum Lunas' ? 'Belum Lunas' : existing.payment_status);
     var method = normalizeMethod_(p.payment_method !== undefined ? p.payment_method : existing.payment_method);
@@ -876,21 +919,12 @@ function updateOrder_(p) {
       if (!customer) throw appError_('NOT_FOUND', 'Pelanggan tidak ditemukan.');
     }
 
-    var unitPrice = Number(m1.price) || 0;
-    var unitCost = Number(m1.cost) || 0;
     var now = nowIso_();
-    var obj = {
+    var base = {
       invoice_no: inv,
       delivery_date: date,
       customer_id: customer ? customer.customer_id : existing.customer_id,
       customer_name: customer ? customer.name : existing.customer_name,
-      menu1_id: pair[0],
-      menu2_id: pair[1],
-      qty: qty,
-      unit_price: unitPrice,
-      unit_cost: unitCost,
-      line_total: qty * unitPrice,
-      margin: qty * (unitPrice - unitCost),
       payment_status: status,
       payment_method: method,
       order_status: p.order_status === 'Batal' ? 'Batal' : (p.order_status === 'Selesai' ? 'Selesai' : (p.order_status === 'Baru' ? 'Baru' : existing.order_status)),
@@ -899,9 +933,22 @@ function updateOrder_(p) {
       created_at: existing.created_at,
       updated_at: now
     };
-    writeObject_('Orders', rowIndex, obj);
-    var cmap = getCustomerMap_();
-    return { order: serializeOrder_(obj, cmap, menuMap) };
+    var objs = itemsToRowObjs_(items, base);
+
+    // Timpa baris lama di tempat, tambah baris baru bila perlu, kosongkan sisa bila baris berkurang.
+    objs.forEach(function (o, i) {
+      if (i < existingRows.length) writeObject_('Orders', existingRows[i]._row, o);
+    });
+    if (objs.length > existingRows.length) {
+      appendRows_('Orders', objs.slice(existingRows.length).map(function (o) { return objectToRow_('Orders', o); }));
+    }
+    if (objs.length < existingRows.length) {
+      var sh = sheet_('Orders');
+      for (var j = objs.length; j < existingRows.length; j++) {
+        sh.getRange(existingRows[j]._row, 1, 1, SCHEMA.Orders.length).clearContent();
+      }
+    }
+    return { order: serializeInvoice_(objs, getCustomerMap_(), menuMap) };
   });
 }
 
@@ -909,19 +956,15 @@ function cancelOrder_(p) {
   var inv = String(p.invoice_no || '').trim();
   if (!inv) throw appError_('VALIDATION', 'Nomor nota wajib diisi.');
   return withLock_(function () {
-    var rowIndex = findRowIndex_('Orders', 'invoice_no', inv);
-    if (rowIndex < 0) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
-    var existing = null;
-    readTable_('Orders').some(function (o) {
-      if (String(o.invoice_no) === inv) { existing = o; return true; }
-      return false;
+    var rows = readTableRows_('Orders').filter(function (o) { return String(o.invoice_no) === inv; });
+    if (!rows.length) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
+    var now = nowIso_();
+    rows.forEach(function (o) {
+      o.order_status = 'Batal';
+      o.updated_at = now;
+      writeObject_('Orders', o._row, o);
     });
-    if (!existing) throw appError_('NOT_FOUND', 'Nota ' + inv + ' tidak ditemukan.');
-    existing.order_status = 'Batal';
-    existing.updated_at = nowIso_();
-    writeObject_('Orders', rowIndex, existing);
-    var menuMap = getMenuMap_();
-    return { order: serializeOrder_(existing, getCustomerMap_(), menuMap) };
+    return { order: serializeInvoice_(rows, getCustomerMap_(), getMenuMap_()) };
   });
 }
 
@@ -1028,9 +1071,12 @@ function listCustomers_(p) {
   var stats = {};
   orders.forEach(function (o) {
     if (!stats[o.customer_id]) {
-      stats[o.customer_id] = { count: 0, last: '', total: 0 };
+      stats[o.customer_id] = { count: 0, last: '', total: 0, inv: {} };
     }
-    stats[o.customer_id].count += 1;
+    if (!stats[o.customer_id].inv[o.invoice_no]) {
+      stats[o.customer_id].inv[o.invoice_no] = true;
+      stats[o.customer_id].count += 1;
+    }
     stats[o.customer_id].total += Number(o.line_total) || 0;
     if (String(o.delivery_date) > String(stats[o.customer_id].last)) {
       stats[o.customer_id].last = o.delivery_date;
@@ -1165,14 +1211,14 @@ function mergeCustomers_(p) {
     });
     if (!source || !target) throw appError_('NOT_FOUND', 'Pelanggan tidak ditemukan.');
 
-    var orders = readTable_('Orders');
+    var orders = readTableRows_('Orders');
     var now = nowIso_();
     orders.forEach(function (o) {
       if (o.customer_id === sourceId) {
         o.customer_id = targetId;
         o.customer_name = target.name;
         o.updated_at = now;
-        writeObject_('Orders', findRowIndex_('Orders', 'invoice_no', o.invoice_no), o);
+        writeObject_('Orders', o._row, o);
       }
     });
 
@@ -1437,6 +1483,30 @@ function serializeOrder_(o, customerMap, menuMap) {
     created_at: o.created_at || '',
     updated_at: o.updated_at || ''
   };
+}
+
+function serializeInvoice_(rows, customerMap, menuMap) {
+  var base = serializeOrder_(rows[0], customerMap, menuMap);
+  var items = rows.map(function (o) {
+    var s = serializeOrder_(o, customerMap, menuMap);
+    return {
+      menu1_id: s.menu1_id, menu1_name: s.menu1_name,
+      menu2_id: s.menu2_id, menu2_name: s.menu2_name,
+      menu_label: s.menu_label, qty: s.qty,
+      unit_price: s.unit_price, unit_cost: s.unit_cost,
+      line_total: s.line_total, margin: s.margin
+    };
+  });
+  var qty = 0, total = 0, margin = 0, allPaid = true;
+  items.forEach(function (i) { qty += i.qty; total += i.line_total; margin += i.margin; });
+  rows.forEach(function (o) { if (o.payment_status !== 'Lunas') allPaid = false; });
+  base.items = items;
+  base.qty = qty;
+  base.line_total = total;
+  base.margin = margin;
+  base.menu_label = items.map(function (i) { return i.menu_label; }).join(' + ');
+  base.payment_status = allPaid ? 'Lunas' : 'Belum Lunas';
+  return base;
 }
 
 function serializeCustomer_(c) {
