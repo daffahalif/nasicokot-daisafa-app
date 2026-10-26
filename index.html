@@ -2374,6 +2374,60 @@
       margin-top: 3px
     }
 
+    .receipt-toolbar .btn {
+      flex: 1 1 auto
+    }
+
+    .receipt-qris {
+      text-align: center
+    }
+
+    .receipt-qris-title {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase
+    }
+
+    .receipt-qris img {
+      display: block;
+      width: auto;
+      max-width: min(100%, 58mm);
+      max-height: 78mm;
+      height: auto;
+      margin: 7px auto 5px;
+      background: #fff
+    }
+
+    .receipt-qris-amt {
+      font-size: 10.5px;
+      color: #333
+    }
+
+    .receipt-qris-fail {
+      margin: 6px 0;
+      font-size: 10px;
+      color: #8a5a00
+    }
+
+    .receipt-img-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 6px 0 2px
+    }
+
+    .receipt-img-wrap img {
+      max-width: 100%;
+      max-height: 52vh;
+      height: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      -webkit-touch-callout: default;
+      -webkit-user-select: auto;
+      user-select: auto
+    }
+
     .receipt-stamp {
       position: absolute;
       top: 38%;
@@ -3583,6 +3637,11 @@
       <path d="M21 12a9 9 0 1 1-2.64-6.36" />
       <path d="M21 3v6h-6" />
     </symbol>
+    <symbol id="i-image" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="9" cy="9" r="1.6" />
+      <path d="m21 15-5-5L5 21" />
+    </symbol>
     <symbol id="i-copy" viewBox="0 0 24 24">
       <rect x="9" y="9" width="12" height="12" rx="2" />
       <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
@@ -3817,7 +3876,7 @@
         <div class="page-head">
           <div class="title-group">
             <h1>Nota</h1>
-            <p>Cetak nota thermal atau salin teksnya.</p>
+            <p>Cetak nota thermal, salin teks, atau salin gambarnya.</p>
           </div>
         </div>
         <div class="nota-layout">
@@ -3919,10 +3978,10 @@
           <use href="#i-users"></use>
         </svg><span>Pelanggan</span>
       </button>
-      <button class="nav-item" type="button" data-nav="laporan" aria-label="Laporan">
+      <button class="nav-item" type="button" data-nav="nota" aria-label="Nota">
         <svg class="ic">
-          <use href="#i-chart"></use>
-        </svg><span>Laporan</span>
+          <use href="#i-receipt"></use>
+        </svg><span>Nota</span>
       </button>
       <button class="nav-item" type="button" data-nav="more" aria-label="Menu lainnya">
         <svg class="ic">
@@ -3948,7 +4007,7 @@
     const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     const MONTHS_LONG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const PAGES = ['beranda', 'pesanan', 'pelanggan', 'laporan', 'menu', 'nota', 'keuangan', 'pengaturan'];
-    const MORE_PAGES = ['menu', 'nota', 'keuangan', 'pengaturan'];
+    const MORE_PAGES = ['menu', 'laporan', 'keuangan', 'pengaturan'];
     const PAY_METHODS = ['Tunai', 'QRIS', 'Transfer'];
     const EXPENSE_CATEGORIES = ['Beli Stok', 'Operasional', 'Lainnya'];
     const IDR = (() => {
@@ -4742,7 +4801,7 @@
       if (moreSheet && !moreSheet.closed) return;
       var items = [
         { page: 'menu', icon: 'bowl', title: 'Menu', text: 'Harga, modal, dan urutan' },
-        { page: 'nota', icon: 'receipt', title: 'Nota', text: 'Cetak dan salin nota' },
+        { page: 'laporan', icon: 'chart', title: 'Laporan', text: 'Penjualan, porsi, dan laba' },
         { page: 'keuangan', icon: 'wallet', title: 'Keuangan', text: 'Kas dan pengeluaran' },
         { page: 'pengaturan', icon: 'sliders', title: 'Pengaturan', text: 'Profil usaha dan impor' }
       ];
@@ -6036,6 +6095,7 @@
       var business = String(settings.business_name || 'Nasi Cokot Daisafa');
       var footer = String(settings.invoice_footer || 'Terima kasih!');
       var ownerWhatsapp = String(settings.owner_whatsapp || '');
+      var qrisUrl = safeUrl(settings.qris_url || '');
       var menu1 = data && data.menu1 ? data.menu1 : (menuById(order.menu1_id) || {});
       var menu2 = data && data.menu2 ? data.menu2 : (menuById(order.menu2_id) || null);
       var label1 = menu1.short_name || menu1.name || menuLabel(order.menu1_id);
@@ -6116,6 +6176,8 @@
         paymentMethod: paymentMethod,
         orderStatus: orderStatus,
         notes: notes,
+        qrisUrl: qrisUrl,
+        showQris: Boolean(qrisUrl) && paymentStatus !== 'Lunas' && orderStatus !== 'Batal',
         text: lines.join('\n')
       };
     }
@@ -6126,6 +6188,7 @@
         '<div class="receipt-toolbar">' +
         '<button class="btn btn-primary" type="button" data-action="print-receipt">' + icon('printer') + 'Cetak</button>' +
         '<button class="btn btn-soft" type="button" data-action="copy-receipt">' + icon('copy') + 'Salin teks</button>' +
+        '<button class="btn btn-amber" type="button" data-action="copy-receipt-image">' + icon('image') + 'Salin gambar</button>' +
         '</div>' +
         '<div class="receipt-wrap">' +
         '<article class="receipt" id="receiptPaper">' +
@@ -6146,12 +6209,17 @@
         '<div class="receipt-sep"></div>' +
         '<div class="receipt-status ' + (paid ? 'paid' : 'unpaid') + '">' + esc(String(model.paymentStatus).toUpperCase()) + (model.paymentMethod ? ' · ' + esc(String(model.paymentMethod).toUpperCase()) : '') + '</div>' +
         (model.notes ? '<div class="receipt-sep"></div><div class="receipt-notes"><strong>Catatan:</strong>\n' + esc(model.notes) + '</div>' : '') +
+        (model.showQris ?
+          '<div class="receipt-sep"></div>' +
+          '<div class="receipt-qris"><div class="receipt-qris-title">Scan QRIS untuk membayar</div>' +
+          '<img src="' + esc(model.qrisUrl) + '" alt="Kode QRIS" data-receipt-qris="1">' +
+          '<div class="receipt-qris-amt">Bayar ' + rp(model.total) + '</div></div>' : '') +
         '<div class="receipt-sep"></div>' +
         '<div class="receipt-thanks">' + esc(model.footer) + '</div>' +
         (model.ownerWhatsapp ? '<div class="receipt-wa">WA ' + esc(waText(model.ownerWhatsapp)) + '</div>' : '') +
         '</article>' +
         '</div>' +
-        '<p class="field-hint" style="text-align:center">Ukuran kertas 80mm. Jika cetak langsung tidak tersedia, gunakan Salin teks.</p>' +
+        '<p class="field-hint" style="text-align:center">Ukuran kertas 80mm. Jika cetak langsung tidak tersedia, gunakan Salin teks atau Salin gambar.</p>' +
         '</div>';
     }
     function renderNotaReceiptEmpty() {
@@ -6173,6 +6241,13 @@
         state.nota.selected = data;
         state.nota.model = buildReceipt(data);
         host.innerHTML = receiptHTML(state.nota.model);
+        $$('#notaReceiptArea img[data-receipt-qris]').forEach(function (img) {
+          img.addEventListener('error', function () {
+            var box = img.closest('.receipt-qris');
+            if (box) box.innerHTML = '<div class="receipt-qris-title">Scan QRIS untuk membayar</div><div class="receipt-qris-fail">Gambar QRIS gagal dimuat. Periksa URL di Pengaturan.</div>';
+          });
+        });
+        if (state.nota.model.showQris) getQrisData(state.nota.model.qrisUrl);
         renderNotaList();
         if (scrollToReceipt) {
           setTimeout(function () {
@@ -6217,6 +6292,294 @@
         console.error(err);
         toast('Cetak tidak didukung di perangkat ini. Gunakan Salin teks.', 'error');
       }
+    }
+    /* ============================================================
+       Nota sebagai gambar (canvas) + QRIS
+       ============================================================ */
+    var qrisDataCache = {};
+    function getQrisData(url) {
+      if (!url) return Promise.resolve('');
+      if (!qrisDataCache[url]) {
+        var base = /^data:image\//i.test(url)
+          ? Promise.resolve(url)
+          : call('qrisImage', {}).then(function (result) { return result && result.data_uri ? result.data_uri : ''; });
+        qrisDataCache[url] = base.catch(function (err) {
+          console.warn('QRIS via server gagal:', err);
+          delete qrisDataCache[url];
+          return '';
+        });
+      }
+      return qrisDataCache[url];
+    }
+    function loadImageEl(src, cors) {
+      return new Promise(function (resolve, reject) {
+        var img = new Image();
+        if (cors) img.crossOrigin = 'anonymous';
+        img.onload = function () { resolve(img); };
+        img.onerror = function () { reject(new Error('Gambar gagal dimuat')); };
+        img.src = src;
+      });
+    }
+    async function loadQrisForCanvas(model) {
+      var data = await getQrisData(model.qrisUrl);
+      if (data) {
+        try { return await loadImageEl(data, false); } catch (err) { }
+      }
+      try {
+        var img = await loadImageEl(model.qrisUrl, true);
+        var probe = document.createElement('canvas');
+        probe.width = probe.height = 1;
+        var pctx = probe.getContext('2d');
+        pctx.drawImage(img, 0, 0, 1, 1);
+        pctx.getImageData(0, 0, 1, 1);
+        return img;
+      } catch (err) {
+        return null;
+      }
+    }
+    function drawReceiptCanvas(ctx, model, qrImg, W, finalH) {
+      var PAD = 24;
+      var CW = W - PAD * 2;
+      var INK = '#141414';
+      var MONO = '"SFMono-Regular", ui-monospace, Menlo, Consolas, "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace';
+      var y = 14;
+      function setFont(size, weight) { ctx.font = (weight || 400) + ' ' + size + 'px ' + MONO; }
+      function wrap(text, maxW) {
+        var out = [];
+        String(text == null ? '' : text).split(/\r?\n/).forEach(function (para) {
+          if (!para.trim()) { out.push(''); return; }
+          var line = '';
+          para.trim().split(/\s+/).forEach(function (word) {
+            while (ctx.measureText(word).width > maxW && word.length > 1) {
+              var cut = word.length;
+              while (cut > 1 && ctx.measureText(word.slice(0, cut)).width > maxW) cut -= 1;
+              if (line) { out.push(line); line = ''; }
+              out.push(word.slice(0, cut));
+              word = word.slice(cut);
+            }
+            var test = line ? line + ' ' + word : word;
+            if (line && ctx.measureText(test).width > maxW) { out.push(line); line = word; }
+            else line = test;
+          });
+          out.push(line);
+        });
+        return out;
+      }
+      function centered(text, size, weight, color, gap) {
+        setFont(size, weight);
+        ctx.fillStyle = color || INK;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        wrap(text, CW).forEach(function (line) {
+          y += Math.round(size * 1.5);
+          ctx.fillText(line, W / 2, y);
+        });
+        y += gap || 0;
+      }
+      function left(text, size, weight, color) {
+        setFont(size, weight);
+        ctx.fillStyle = color || INK;
+        ctx.textAlign = 'left';
+        wrap(text, CW).forEach(function (line) {
+          y += Math.round(size * 1.5);
+          ctx.fillText(line, PAD, y);
+        });
+      }
+      function leftRight(l, r, size, weight, color) {
+        setFont(size, weight);
+        ctx.fillStyle = color || INK;
+        var lw = ctx.measureText(l).width;
+        var gap = 12;
+        var rLines = wrap(r, Math.max(CW - lw - gap, CW * 0.4));
+        var lh = Math.round(size * 1.5);
+        y += lh;
+        ctx.textAlign = 'left';
+        ctx.fillText(l, PAD, y);
+        ctx.textAlign = 'right';
+        rLines.forEach(function (line, i) {
+          if (i > 0) y += lh;
+          ctx.fillText(line, W - PAD, y);
+        });
+      }
+      function sep() {
+        y += 9;
+        ctx.save();
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = '#8c8c8c';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD, y + .5);
+        ctx.lineTo(W - PAD, y + .5);
+        ctx.stroke();
+        ctx.restore();
+        y += 8;
+      }
+
+      centered(String(model.business || '').toUpperCase(), 20, 800, INK, 0);
+      centered('NOTA PESANAN', 10.5, 400, '#555', 2);
+      sep();
+      leftRight('No. Nota', model.invoice || '-', 12.5);
+      leftRight('Tanggal', model.dateLabel || '-', 12.5);
+      leftRight('Pelanggan', model.customerName || '-', 12.5);
+      sep();
+      model.items.forEach(function (it, i) {
+        if (i > 0) y += 4;
+        left(it.label, 13.5, 700);
+        leftRight('  ' + it.qty + ' x ' + rp(it.unitPrice), rp(it.subtotal), 12.5);
+      });
+      sep();
+      leftRight('TOTAL', rp(model.total), 17, 800);
+      sep();
+      var paid = model.paymentStatus === 'Lunas';
+      centered(String(model.paymentStatus || '').toUpperCase() + (model.paymentMethod ? ' · ' + String(model.paymentMethod).toUpperCase() : ''), 12.5, 700, paid ? '#1f5c3f' : '#8a5a00', 0);
+      if (model.notes) {
+        sep();
+        left('Catatan:', 11.5, 700, '#333');
+        left(model.notes, 11.5, 400, '#333');
+      }
+      if (model.showQris && qrImg) {
+        sep();
+        centered('SCAN QRIS UNTUK MEMBAYAR', 12, 800, INK, 6);
+        var maxW = CW - 28;
+        var maxH = 330;
+        var iw = qrImg.naturalWidth || qrImg.width || 1;
+        var ih = qrImg.naturalHeight || qrImg.height || 1;
+        var sc = Math.min(maxW / iw, maxH / ih);
+        var dw = Math.round(iw * sc);
+        var dh = Math.round(ih * sc);
+        var bx = Math.round((W - dw) / 2);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(bx - 6, y - 2, dw + 12, dh + 12);
+        ctx.strokeStyle = '#d6d6d6';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx - 6 + .5, y - 2 + .5, dw + 11, dh + 11);
+        ctx.imageSmoothingEnabled = sc < 1;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(qrImg, bx, y + 4, dw, dh);
+        ctx.imageSmoothingEnabled = true;
+        y += dh + 14;
+        centered('Bayar ' + rp(model.total), 12, 400, '#333', 0);
+      }
+      sep();
+      centered(model.footer || '', 12.5, 400, INK, 0);
+      if (model.ownerWhatsapp) centered('WA ' + waText(model.ownerWhatsapp), 10.5, 400, '#555', 0);
+      y += 18;
+
+      if (finalH) {
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = '#9a9a9a';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, .5); ctx.lineTo(W, .5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, finalH - .5); ctx.lineTo(W, finalH - .5); ctx.stroke();
+        ctx.restore();
+        if (model.orderStatus === 'Batal') {
+          ctx.save();
+          ctx.translate(W / 2, finalH * 0.42);
+          ctx.rotate(-14 * Math.PI / 180);
+          setFont(26, 800);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          var tw = ctx.measureText('BATAL').width;
+          ctx.globalAlpha = .85;
+          ctx.strokeStyle = '#a33f33';
+          ctx.fillStyle = '#a33f33';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(-tw / 2 - 14, -24, tw + 28, 48);
+          ctx.fillText('BATAL', 0, 1);
+          ctx.restore();
+        }
+      }
+      return y;
+    }
+    function renderReceiptCanvas(model, qrImg) {
+      var W = 384;
+      var probe = document.createElement('canvas');
+      probe.width = W;
+      probe.height = 10;
+      var H = Math.ceil(drawReceiptCanvas(probe.getContext('2d'), model, qrImg, W, 0));
+      var scale = H > 2400 ? 2 : 3;
+      var canvas = document.createElement('canvas');
+      canvas.width = W * scale;
+      canvas.height = H * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, W, H);
+      drawReceiptCanvas(ctx, model, qrImg, W, H);
+      return canvas;
+    }
+    function canvasToBlob(canvas) {
+      return new Promise(function (resolve, reject) {
+        canvas.toBlob(function (blob) {
+          if (blob) resolve(blob);
+          else reject(new Error('Gagal membuat gambar nota.'));
+        }, 'image/png');
+      });
+    }
+    async function receiptToBlob(model) {
+      var qr = null;
+      if (model.showQris) {
+        qr = await loadQrisForCanvas(model);
+        if (!qr) toast('Gambar QRIS tidak bisa dimuat, nota disalin tanpa QRIS. Cek URL di Pengaturan.', 'error', 5200);
+      }
+      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (err) { } }
+      return canvasToBlob(renderReceiptCanvas(model, qr));
+    }
+    function openReceiptImageSheet(blob, model) {
+      var url = URL.createObjectURL(blob);
+      var filename = 'nota-' + String(model.invoice || 'nasi-cokot').replace(/[^\w-]+/g, '') + '.png';
+      var file = null;
+      try { file = new File([blob], filename, { type: 'image/png' }); } catch (err) { }
+      var canShare = Boolean(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }));
+      var modal = openModal({
+        title: 'Gambar nota',
+        kicker: 'Salin manual',
+        body: '<p class="field-hint">Perangkat ini belum mengizinkan salin gambar otomatis. Tekan lama gambar lalu pilih <strong>Salin</strong>, atau pakai tombol di bawah.</p>' +
+          '<div class="receipt-img-wrap"><img src="' + url + '" alt="Gambar nota ' + esc(model.invoice || '') + '"></div>',
+        footer: (canShare ? '<button class="btn btn-primary" type="button" data-share>Bagikan</button>' : '') +
+          '<button class="btn ' + (canShare ? 'btn-soft' : 'btn-primary') + '" type="button" data-download>Unduh</button>' +
+          '<button class="btn btn-ghost" type="button" data-close>Tutup</button>'
+      });
+      modal.onClose = function () { setTimeout(function () { URL.revokeObjectURL(url); }, 1000); };
+      var closeBtn = modal.el.querySelector('[data-close]');
+      if (closeBtn) closeBtn.addEventListener('click', modal.close);
+      var dl = modal.el.querySelector('[data-download]');
+      if (dl) dl.addEventListener('click', function () {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+      var sh = modal.el.querySelector('[data-share]');
+      if (sh) sh.addEventListener('click', async function () {
+        try { await navigator.share({ files: [file], title: 'Nota ' + (model.invoice || '') }); }
+        catch (err) { if (!err || err.name !== 'AbortError') toast('Gagal membagikan gambar.', 'error'); }
+      });
+    }
+    function copyReceiptImage(button) {
+      if (!state.nota.model) {
+        toast('Pilih nota terlebih dahulu.', 'error');
+        return undefined;
+      }
+      var model = state.nota.model;
+      return withBusy(button, async function () {
+        var blobPromise = receiptToBlob(model);
+        blobPromise.catch(function () { });
+        if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+            toast('Gambar nota disalin.', 'success');
+            return;
+          } catch (err) {
+            console.warn('Salin gambar otomatis gagal:', err);
+          }
+        }
+        var blob = await blobPromise;
+        openReceiptImageSheet(blob, model);
+      });
     }
     async function copyReceipt() {
       if (!state.nota.model) {
@@ -6889,6 +7252,9 @@
           break;
         case 'copy-receipt':
           copyReceipt();
+          break;
+        case 'copy-receipt-image':
+          copyReceiptImage(button);
           break;
         case 'new-expense':
           openExpenseForm();

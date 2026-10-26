@@ -13,7 +13,7 @@
  *   createOrder, updateOrder, cancelOrder,
  *   listCustomers, saveCustomer, mergeCustomers,
  *   listMenu, saveMenu, listExpenses, saveExpense,
- *   report, getSettings, saveSettings, importLegacy
+ *   report, getSettings, saveSettings, importLegacy, qrisImage
  *
  * Safety: ensureSchema() only creates missing sheets / writes headers on new ones.
  * There is intentionally no destructive setupSheets().
@@ -91,6 +91,7 @@ function api(req) {
       case 'getSettings': data = { settings: getSettings_() }; break;
       case 'saveSettings': data = saveSettings_(p); break;
       case 'importLegacy': data = importLegacy_(p); break;
+      case 'qrisImage': data = qrisImage_(p); break;
       default: return fail_('VALIDATION', 'Aksi tidak dikenal: ' + action);
     }
     return { ok: true, data: data };
@@ -1910,4 +1911,40 @@ function undoLegacyImport() {
     Logger.log('undoLegacyImport: ' + JSON.stringify(cleared));
     return cleared;
   });
+}
+
+/**
+ * Ambil gambar QRIS (dari setting qris_url) dan kembalikan sebagai data URI,
+ * supaya browser bisa menggambarnya ke canvas untuk fitur "Salin gambar nota".
+ * Browser tidak boleh membaca piksel gambar dari situs lain, jadi server yang mengunduhnya.
+ * Hanya URL yang tersimpan di Pengaturan yang diambil (parameter dari klien diabaikan).
+ * Butuh izin UrlFetchApp (script.external_request): otorisasi sekali saat deploy ulang.
+ */
+function qrisImage_(p) {
+  var url = String(getSettings_().qris_url || '').trim();
+  if (!url) throw appError_('VALIDATION', 'URL QRIS belum diatur di Pengaturan.');
+  if (/^data:image\//i.test(url)) return { data_uri: url };
+  if (!/^https?:\/\//i.test(url)) throw appError_('VALIDATION', 'URL QRIS harus diawali http:// atau https://.');
+
+  var cache = null;
+  var cacheKey = 'qris_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, url)).slice(0, 40);
+  try {
+    cache = CacheService.getScriptCache();
+    var hit = cache.get(cacheKey);
+    if (hit) return { data_uri: hit, cached: true };
+  } catch (err) { cache = null; }
+
+  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+  var status = res.getResponseCode();
+  if (status < 200 || status >= 300) throw appError_('FETCH', 'Gambar QRIS tidak bisa diunduh (HTTP ' + status + '). Pastikan tautannya publik.');
+  var blob = res.getBlob();
+  var type = String(blob.getContentType() || '').toLowerCase().split(';')[0];
+  if (type.indexOf('image/') !== 0) throw appError_('FETCH', 'Tautan QRIS bukan gambar langsung (jenis: ' + (type || 'tidak diketahui') + '). Gunakan tautan langsung ke file gambar.');
+  var bytes = blob.getBytes();
+  if (bytes.length > 3 * 1024 * 1024) throw appError_('FETCH', 'Gambar QRIS terlalu besar (maks 3 MB).');
+  var dataUri = 'data:' + type + ';base64,' + Utilities.base64Encode(bytes);
+  if (cache && dataUri.length < 95000) {
+    try { cache.put(cacheKey, dataUri, 21600); } catch (err) { }
+  }
+  return { data_uri: dataUri };
 }
