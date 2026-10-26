@@ -6729,7 +6729,7 @@
           await loadBootstrap(false);
           showImportResult(result);
           if (state.page === 'pengaturan') loadSettingsPage();
-          toast('Impor data lama selesai.', 'success', 4200);
+          if (!(result && result.already)) toast('Impor data lama selesai.', 'success', 4200);
         });
       });
     }
@@ -6745,6 +6745,8 @@
         body = '<div class="stack" style="gap:12px">' +
           '<div class="alert">' + icon('check') + '<div>Data lama berhasil diproses.</div></div>' +
           importCountsHTML(counts) +
+          (data.read ? '<p class="field-hint">Baris terbaca dari tab lama — Transaksi Baru: <strong>' + (data.read.transaksi_baru == null ? 'tab tidak ada' : nf(data.read.transaksi_baru)) + '</strong>, List Pesanan: <strong>' + (data.read.list_pesanan == null ? 'tab tidak ada' : nf(data.read.list_pesanan)) + '</strong>, Pengeluaran: <strong>' + (data.read.pengeluaran == null ? 'tab tidak ada' : nf(data.read.pengeluaran)) + '</strong>.</p>' : '') +
+          (num(counts.orders) + num(counts.expenses) === 0 ? '<div class="alert alert-error">' + icon('alert') + '<div>Tidak ada data yang masuk. Periksa nama tab lama dan isinya, lalu jalankan diagnoseLegacy() di editor Apps Script.</div></div>' : '') +
           (warnings.length ? '<div><p class="field-label" style="margin-bottom:6px">Peringatan (' + warnings.length + ')</p><div class="summary-preview" style="max-height:200px">' + warnings.slice(0, 30).map(function (warning) {
             if (typeof warning === 'string') return esc(warning);
             return esc(warning && (warning.message || warning.issue || warning.level) ? (warning.message || warning.issue || warning.level) : String(warning));

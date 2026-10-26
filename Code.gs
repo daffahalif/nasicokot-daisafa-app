@@ -1564,7 +1564,6 @@ function importLegacy_() {
 
     var ordersOut = [];
     var expensesOut = [];
-    var customersOut = [];
     var logs = [];
     var dedupe = {};
     var dedupeExpense = {};
@@ -1581,18 +1580,16 @@ function importLegacy_() {
       });
     }
 
+    // resolveCustomerLocked_ sudah menulis pelanggan baru ke sheet Customers,
+    // jadi di sini hanya menghitung pelanggan baru (tidak menulis ulang).
+    var existingIds = {};
+    var newIds = {};
+    readTable_('Customers').forEach(function (c) { existingIds[c.customer_id] = true; });
     function trackCustomer(c, key) {
-      if (!key) return;
-      var seen = customersOut.map(function (r) { return String(r[1]); });
-      for (var i = 0; i < seen.length; i++) {
-        if (seen[i] === key) return;
-      }
-      customersOut.push(objectToRow_('Customers', c));
+      if (!key || existingIds[c.customer_id] || newIds[c.customer_id]) return;
+      newIds[c.customer_id] = true;
+      counts.customers += 1;
     }
-
-    var customersAll = readTable_('Customers');
-    var customerKeys = {};
-    customersAll.forEach(function (c) { customerKeys[c.customer_key] = true; });
 
     /* ---------------- Transaksi Baru ---------------- */
     if (tb) {
@@ -1821,10 +1818,6 @@ function importLegacy_() {
     });
 
     /* ---------------- Write ---------------- */
-    if (customersOut.length) {
-      var customerObjs = customersOut.map(function (r) { return { customer_id: r[0], name: r[1], name_key: r[2], whatsapp: r[3], customer_key: r[4], aliases: r[5], merged_into: r[6], notes: r[7], active: r[8], created_at: r[9], updated_at: r[10] }; });
-      appendRows_('Customers', customerObjs.map(function (c) { return objectToRow_('Customers', c); }));
-    }
     if (ordersOut.length) {
       appendRows_('Orders', ordersOut.map(function (o) { return objectToRow_('Orders', o); }));
     }
@@ -1867,4 +1860,54 @@ function importLegacy_() {
 
 function importLegacy() {
   return importLegacy_();
+}
+
+/**
+ * Batalkan hasil impor data lama supaya importLegacy() bisa dijalankan lagi.
+ * Jalankan manual dari editor Apps Script. Yang dilakukan:
+ *  - mengosongkan baris Orders & Expenses yang catatannya diawali "Impor:"
+ *  - mengosongkan Import_Log
+ *  - menghapus baris pelanggan ganda (customer_id sama), baris pertama dipertahankan
+ *  - mengembalikan legacy_import_done ke false
+ * Pesanan yang kamu input lewat aplikasi TIDAK disentuh.
+ */
+function undoLegacyImport() {
+  return withLock_(function () {
+    var cleared = { orders: 0, expenses: 0, logs: 0, duplicateCustomers: 0 };
+
+    function clearRows_(name, pred) {
+      var sh = sheet_(name);
+      readTableRows_(name).forEach(function (r) {
+        if (pred(r)) {
+          sh.getRange(r._row, 1, 1, SCHEMA[name].length).clearContent();
+          if (name === 'Orders') cleared.orders += 1;
+          else if (name === 'Expenses') cleared.expenses += 1;
+        }
+      });
+    }
+    clearRows_('Orders', function (r) { return String(r.notes || '').indexOf('Impor:') === 0; });
+    clearRows_('Expenses', function (r) { return String(r.notes || '').indexOf('Impor:') === 0; });
+
+    var log = sheet_('Import_Log');
+    var logLast = lastDataRow_(log, 1);
+    if (logLast >= 2) {
+      cleared.logs = logLast - 1;
+      log.getRange(2, 1, logLast - 1, SCHEMA.Import_Log.length).clearContent();
+    }
+
+    var seen = {};
+    var cust = sheet_('Customers');
+    readTableRows_('Customers').forEach(function (r) {
+      if (seen[r.customer_id]) {
+        cust.getRange(r._row, 1, 1, SCHEMA.Customers.length).clearContent();
+        cleared.duplicateCustomers += 1;
+      } else {
+        seen[r.customer_id] = true;
+      }
+    });
+
+    setSettingLocked_('legacy_import_done', 'false');
+    Logger.log('undoLegacyImport: ' + JSON.stringify(cleared));
+    return cleared;
+  });
 }
